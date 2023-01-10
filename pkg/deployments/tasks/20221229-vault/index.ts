@@ -5,6 +5,8 @@ import VaultDeployer from '@balancer-labs/v2-helpers/src/models/vault/VaultDeplo
 import { ethers } from 'hardhat';
 import { RawVaultDeployment } from '@balancer-labs/v2-helpers/src/models/vault/types';
 import TypesConverter from '@balancer-labs/v2-helpers/src/models/types/TypesConverter';
+import { Contract } from 'ethers';
+import { FP_100_PCT } from '@balancer-labs/v2-helpers/src/numbers';
 
 export default async (task: Task, { force, from }: TaskRunOptions = {}): Promise<void> => {
   let input = task.input() as RawVaultDeployment;
@@ -54,7 +56,11 @@ export default async (task: Task, { force, from }: TaskRunOptions = {}): Promise
   // ProtocolFeePercentagesProvider
   const feesProvider = vault.getFeesProvider(); // We know it was added in this case, so no error worries
   await task.save({ ProtocolFeePercentagesProvider: feesProvider.address });
-  await task.verify('ProtocolFeePercentagesProvider', feesProvider.address, [vault.address]);
+  await task.verify('ProtocolFeePercentagesProvider', feesProvider.address, [
+    vault.address,
+    input.maxYieldValue,
+    input.maxAUMValue,
+  ]);
 
   // AuthorizerAdaptor
   await task.save({ AuthorizerAdaptor: vault.authorizerAdaptor.address });
@@ -74,6 +80,12 @@ export default async (task: Task, { force, from }: TaskRunOptions = {}): Promise
     vault.instance,
     vault.basicAuthorizer,
     vault.authorizer.address,
+    admin
+  );
+
+  const contract = new Contract(
+    '0x6bff6a69ff157682d1fc0a8f4666b60234cd5cf1',
+    ['function isValidFeeType(uint256) public view returns (bool)'],
     admin
   );
 };

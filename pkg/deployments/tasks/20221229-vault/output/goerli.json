@@ -5,5 +5,6 @@
   "AuthorizerAdaptor": "0x3B4EE1D977972cEAfE7A2e113AD9e072Cb88F61c",
   "AuthorizerAdaptorEntrypoint": "0x6Ff84CDFe488ABabc22dcC025C1cECc9D84d1492",
   "TimelockAuthorizer": "0x10be7e16491d2d7cd9c06f8342d9ec6b96985ead",
-  "TimelockExecutor": "0x94c152e8BfF8bC54F9717C70B133C6F0530c97Af"
+  "TimelockExecutor": "0x94c152e8BfF8bC54F9717C70B133C6F0530c97Af",
+  "ProtocolFeePercentagesProvider": "0xD64752ff6c29697bc6d468AC5905F4c2803FE3dD"
 }
