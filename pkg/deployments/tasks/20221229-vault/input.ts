@@ -1,19 +1,10 @@
-import Task, { TaskMode } from '../../src/task';
-import { MONTH } from '@balancer-labs/v2-helpers/src/time';
+import { RawVaultDeployment } from '@balancer-labs/v2-helpers/src/models/vault/types';
+import { MONTH, WEEK } from '@balancer-labs/v2-helpers/src/time';
 
-export type VaultDeployment = {
-  Authorizer: string;
-  WETH: string;
-  pauseWindowDuration: number;
-  bufferPeriodDuration: number;
+const input: RawVaultDeployment = {
+  pauseWindowDuration: 3 * MONTH,
+  bufferPeriodDuration: MONTH,
+  rootTransferDelay: WEEK,
 };
 
-const Authorizer = new Task('20210418-authorizer', TaskMode.READ_ONLY);
-const WETH = new Task('00000000-tokens', TaskMode.READ_ONLY);
-
-export default {
-  Authorizer,
-  pauseWindowDuration: 6 * MONTH,
-  bufferPeriodDuration: MONTH * 3,
-  WETH,
-};
+export default input;
