@@ -76,6 +76,7 @@ export default class Verifier {
     args: string | unknown[],
     libraries: Libraries = {}
   ): Promise<EtherscanResponse> {
+    logger.info(`Verifying contract ${name}...`);
     const deployedBytecodeHex = await retrieveContractBytecode(address, this.network.provider, this.network.name);
     const deployedBytecode = new Bytecode(deployedBytecodeHex);
     const buildInfos = await task.buildInfos();

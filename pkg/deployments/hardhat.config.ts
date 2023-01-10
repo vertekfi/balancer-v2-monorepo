@@ -15,9 +15,11 @@ import { checkArtifact, extractArtifact } from './src/artifact';
 import test from './src/test';
 import Task, { TaskMode } from './src/task';
 import Verifier from './src/verifier';
-import { Logger } from './src/logger';
+import logger, { Logger } from './src/logger';
 import { checkActionIds, checkActionIdUniqueness, saveActionIds } from './src/actionId';
 import { saveContractDeploymentAddresses } from './src/network';
+
+const defaultVerboseLogging = true;
 
 task('deploy', 'Run deployment task')
   .addParam('id', 'Deployment task ID')
@@ -25,7 +27,9 @@ task('deploy', 'Run deployment task')
   .addOptionalParam('key', 'Etherscan API key to verify contracts')
   .setAction(
     async (args: { id: string; force?: boolean; key?: string; verbose?: boolean }, hre: HardhatRuntimeEnvironment) => {
-      Logger.setDefaults(false, args.verbose || false);
+      Logger.setDefaults(false, args.verbose || defaultVerboseLogging);
+
+      logger.info(`Task:deploy`);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const apiKey = args.key ?? (hre.config.networks[hre.network.name] as any).verificationAPIKey;
@@ -45,7 +49,7 @@ task('verify-contract', `Verify a task's deployment on a block explorer`)
       args: { id: string; name: string; address: string; key: string; args: string; verbose?: boolean },
       hre: HardhatRuntimeEnvironment
     ) => {
-      Logger.setDefaults(false, args.verbose || false);
+      Logger.setDefaults(false, args.verbose || defaultVerboseLogging);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const apiKey = args.key ?? (hre.config.networks[hre.network.name] as any).verificationAPIKey;
@@ -61,7 +65,7 @@ task('extract-artifacts', `Extract contract artifacts from their build-info`)
   .addOptionalParam('file', 'Target build-info file name')
   .addOptionalParam('name', 'Contract name')
   .setAction(async (args: { id?: string; file?: string; name?: string; verbose?: boolean }) => {
-    Logger.setDefaults(false, args.verbose || false);
+    Logger.setDefaults(false, args.verbose || defaultVerboseLogging);
 
     if (args.id) {
       const task = new Task(args.id, TaskMode.READ_ONLY);
@@ -80,7 +84,9 @@ task('check-deployments', `Check that all tasks' deployments correspond to their
     // The force argument above is actually not passed (and not required or used in CHECK mode), but it is the easiest
     // way to address type issues.
 
-    Logger.setDefaults(false, args.verbose || false);
+    Logger.setDefaults(false, args.verbose || defaultVerboseLogging);
+
+    logger.info(`Task:check-deployments`);
 
     if (args.id) {
       await new Task(args.id, TaskMode.CHECK, hre.network.name).run(args);
@@ -107,7 +113,7 @@ task('check-deployments', `Check that all tasks' deployments correspond to their
 task('check-artifacts', `check that contract artifacts correspond to their build-info`)
   .addOptionalParam('id', 'Specific task ID')
   .setAction(async (args: { id?: string; verbose?: boolean }) => {
-    Logger.setDefaults(false, args.verbose || false);
+    Logger.setDefaults(false, args.verbose || defaultVerboseLogging);
 
     if (args.id) {
       const task = new Task(args.id, TaskMode.READ_ONLY);
@@ -130,7 +136,7 @@ task('save-action-ids', `Print the action IDs for a particular contract and chec
         args: { id: string; name: string; address?: string; verbose?: boolean },
         hre: HardhatRuntimeEnvironment
       ) {
-        Logger.setDefaults(false, args.verbose || false);
+        Logger.setDefaults(false, args.verbose || defaultVerboseLogging);
 
         // The user is calculating action IDs for a contract which isn't included in the task outputs.
         // Most likely this is for a pool which is to be deployed from a factory contract deployed as part of the task.
@@ -191,7 +197,7 @@ task('save-action-ids', `Print the action IDs for a particular contract and chec
 task('check-action-ids', `Check that contract action-ids correspond the expected values`)
   .addOptionalParam('id', 'Specific task ID')
   .setAction(async (args: { id?: string; verbose?: boolean }, hre: HardhatRuntimeEnvironment) => {
-    Logger.setDefaults(false, args.verbose || false);
+    Logger.setDefaults(false, args.verbose || defaultVerboseLogging);
 
     if (args.id) {
       const task = new Task(args.id, TaskMode.READ_ONLY, hre.network.name);
@@ -208,7 +214,7 @@ task('check-action-ids', `Check that contract action-ids correspond the expected
 task('build-address-lookup', `Build a lookup table from contract addresses to the relevant deployment`)
   .addOptionalParam('id', 'Specific task ID')
   .setAction(async (args: { id?: string; verbose?: boolean }, hre: HardhatRuntimeEnvironment) => {
-    Logger.setDefaults(false, args.verbose || false);
+    Logger.setDefaults(false, args.verbose || defaultVerboseLogging);
 
     if (args.id) {
       const task = new Task(args.id, TaskMode.READ_ONLY, hre.network.name);
