@@ -23,21 +23,46 @@ export default {
     // First we deploy the vault, adaptor and entrypoint with a basic authorizer.
     const basicAuthorizer = await this._deployBasicAuthorizer(admin);
     const vault = await (mocked ? this._deployMocked : this._deployReal)(deployment, basicAuthorizer);
-    const authorizerAdaptor = await this._deployAuthorizerAdaptor(vault, from);
-    const adaptorEntrypoint = await this._deployAuthorizerAdaptorEntrypoint(authorizerAdaptor);
+    const authorizerAdaptor = await this._deployAuthorizerAdaptor(vault.address, from);
+    const adaptorEntrypoint = await this._deployAuthorizerAdaptorEntrypoint(authorizerAdaptor.address);
     const protocolFeeProvider = await this._deployProtocolFeeProvider(
-      vault,
+      vault.address,
       deployment.maxYieldValue,
       deployment.maxAUMValue
     );
 
     // Then, with the entrypoint correctly deployed, we create the actual authorizer to be used and set it in the vault.
-    const authorizer = await this._deployAuthorizer(admin, adaptorEntrypoint, from);
+    const authorizer = await this._deployAuthorizer(
+      admin,
+      adaptorEntrypoint.address,
+      deployment.rootTransferDelay,
+      from
+    );
+
+    // Do the switcharoo
+    await this._giveVaultProperAuthorizer(vault, basicAuthorizer, authorizer.address, admin);
+
+    return new Vault(
+      mocked,
+      vault,
+      authorizer,
+      authorizerAdaptor,
+      adaptorEntrypoint,
+      protocolFeeProvider,
+      basicAuthorizer,
+      admin
+    );
+  },
+
+  async _giveVaultProperAuthorizer(
+    vault: Contract,
+    basicAuthorizer: Contract,
+    timelockAuthAddress: string,
+    admin: SignerWithAddress
+  ) {
     const setAuthorizerActionId = await actionId(vault, 'setAuthorizer');
     await basicAuthorizer.grantRolesToMany([setAuthorizerActionId], [admin.address]);
-    await vault.connect(admin).setAuthorizer(authorizer.address);
-
-    return new Vault(mocked, vault, authorizer, authorizerAdaptor, adaptorEntrypoint, protocolFeeProvider, admin);
+    await vault.connect(admin).setAuthorizer(timelockAuthAddress);
   },
 
   async _deployReal(deployment: VaultDeployment, authorizer: Contract): Promise<Contract> {
@@ -58,30 +83,31 @@ export default {
 
   async _deployAuthorizer(
     admin: SignerWithAddress,
-    authorizerAdaptorEntrypoint: Contract,
+    authorizerAdaptorEntrypoint: string,
+    rootTransferDelay: number,
     from?: SignerWithAddress
   ): Promise<Contract> {
     return deploy('v2-vault/TimelockAuthorizer', {
-      args: [admin.address, authorizerAdaptorEntrypoint.address, MONTH],
+      args: [admin.address, authorizerAdaptorEntrypoint, rootTransferDelay],
       from,
     });
   },
 
-  async _deployAuthorizerAdaptor(vault: Contract, from?: SignerWithAddress): Promise<Contract> {
-    return deploy('v2-liquidity-mining/AuthorizerAdaptor', { args: [vault.address], from });
+  async _deployAuthorizerAdaptor(vault: string, from?: SignerWithAddress): Promise<Contract> {
+    return deploy('v2-liquidity-mining/AuthorizerAdaptor', { args: [vault], from });
   },
 
-  async _deployAuthorizerAdaptorEntrypoint(adaptor: Contract, from?: SignerWithAddress): Promise<Contract> {
-    return deploy('v2-liquidity-mining/AuthorizerAdaptorEntrypoint', { args: [adaptor.address], from });
+  async _deployAuthorizerAdaptorEntrypoint(adaptor: string, from?: SignerWithAddress): Promise<Contract> {
+    return deploy('v2-liquidity-mining/AuthorizerAdaptorEntrypoint', { args: [adaptor], from });
   },
 
   async _deployProtocolFeeProvider(
-    vault: Contract,
+    vault: string,
     maxYieldValue: BigNumberish,
     maxAUMValue: BigNumberish
   ): Promise<Contract> {
     return deploy('v2-standalone-utils/ProtocolFeePercentagesProvider', {
-      args: [vault.address, maxYieldValue, maxAUMValue],
+      args: [vault, maxYieldValue, maxAUMValue],
     });
   },
 };

@@ -8,6 +8,7 @@ export type RawVaultDeployment = {
   admin?: SignerWithAddress;
   pauseWindowDuration?: BigNumberish;
   bufferPeriodDuration?: BigNumberish;
+  rootTransferDelay?: number;
   maxYieldValue?: BigNumberish;
   maxAUMValue?: BigNumberish;
   from?: SignerWithAddress;
@@ -17,6 +18,7 @@ export type VaultDeployment = {
   mocked: boolean;
   pauseWindowDuration: BigNumberish;
   bufferPeriodDuration: BigNumberish;
+  rootTransferDelay: number;
   maxYieldValue: BigNumberish;
   maxAUMValue: BigNumberish;
   admin?: SignerWithAddress;

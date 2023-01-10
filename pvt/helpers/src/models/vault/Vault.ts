@@ -22,6 +22,7 @@ export default class Vault {
   authorizerAdaptor: Contract;
   authorizerAdaptorEntrypoint: Contract;
   protocolFeesProvider: Contract;
+  basicAuthorizer: Contract;
   admin?: SignerWithAddress;
   feesCollector?: Contract;
 
@@ -40,6 +41,7 @@ export default class Vault {
     authorizerAdaptor: Contract,
     authorizerAdaptorEntrypoint: Contract,
     protocolFeesProvider: Contract,
+    basicAuthorizer: Contract,
     admin?: SignerWithAddress
   ) {
     this.mocked = mocked;
@@ -48,6 +50,7 @@ export default class Vault {
     this.authorizerAdaptor = authorizerAdaptor;
     this.authorizerAdaptorEntrypoint = authorizerAdaptorEntrypoint;
     this.protocolFeesProvider = protocolFeesProvider;
+    this.basicAuthorizer = basicAuthorizer;
     this.admin = admin;
   }
 
