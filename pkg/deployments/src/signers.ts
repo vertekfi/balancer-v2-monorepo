@@ -3,6 +3,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-wit
 
 import { impersonateAccount, setBalance as setAccountBalance } from '@nomicfoundation/hardhat-network-helpers';
 import { fp } from '@balancer-labs/v2-helpers/src/numbers';
+import { ethers } from 'hardhat';
 
 export async function getSigners(): Promise<SignerWithAddress[]> {
   const { ethers } = await import('hardhat');
@@ -24,4 +25,8 @@ export async function impersonate(address: string, balance = fp(100)): Promise<S
 
 export async function setBalance(address: string, balance: BigNumber): Promise<void> {
   await setAccountBalance(address, balance);
+}
+
+export function getChainId() {
+  return ethers.provider.network.chainId;
 }

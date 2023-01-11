@@ -1,14 +1,14 @@
-import { Event } from 'ethers';
+import { Contract, Event } from 'ethers';
 import { parseUnits } from 'ethers/lib/utils';
 import { deployedAt } from '../../../contract';
 import { WeightedPoolCreationConfig } from '../types';
 import { getWeightedDeploymentArgs, validateWeightedPoolConfig } from '../utils';
 
-export async function createWeightedPool(poolConfig: WeightedPoolCreationConfig, weightedFactoryAddress: string) {
+export async function createWeightedPool(poolConfig: WeightedPoolCreationConfig, weightedFactory: Contract) {
   validateWeightedPoolConfig(poolConfig);
 
   const deploymentArgs = getWeightedDeploymentArgs(poolConfig);
-  const weightedFactory = await deployedAt('v2-pool-weighted/WeightedPoolFactory', weightedFactoryAddress);
+  // const weightedFactory = await deployedAt('v2-pool-weighted/WeightedPoolFactory', weightedFactoryAddress);
 
   const receipt = await weightedFactory.create(
     deploymentArgs.name,

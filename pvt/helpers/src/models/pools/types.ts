@@ -70,3 +70,5 @@ export interface StablePoolCreationConfig extends BasePoolCreationConfig {
   amplificationParameter: number;
   deploymentArgs: StablePoolDeploymentArgs;
 }
+
+export type PoolConfigType = WeightedPoolCreationConfig | StablePoolCreationConfig;

@@ -1,4 +1,3 @@
-import { DAY } from '@balancer-labs/v2-helpers/src/time';
 import Task from '../../src/task';
 import { TaskRunOptions } from '../../src/types';
 import { WeightedPoolDeployment } from './input';

@@ -20,10 +20,12 @@ import {
   RawInputKeyValue,
   RawOutput,
   TaskRunOptions,
+  DeployedContract,
 } from './types';
 import { getContractDeploymentTransactionHash, saveContractDeploymentTransactionHash } from './network';
 import { getTaskActionIds } from './actionId';
 import { getArtifactFromContractOutput } from './artifact';
+import { parseFileSync } from './utils';
 
 const TASKS_DIRECTORY = path.resolve(__dirname, '../tasks');
 const DEPRECATED_DIRECTORY = path.join(TASKS_DIRECTORY, 'deprecated');
@@ -71,6 +73,10 @@ export default class Task {
     const address = this.output()[name];
     if (!address) throw Error(`Could not find deployed address for ${name}`);
     return this.instanceAt(name, address);
+  }
+
+  async deployedInstanceTyped(name: DeployedContract): Promise<Contract> {
+    return this.deployedInstance(name);
   }
 
   async inputInstance(artifactName: string, inputName: string): Promise<Contract> {
@@ -337,7 +343,7 @@ export default class Task {
   }
 
   private _read(path: string): Output {
-    return fs.existsSync(path) ? JSON.parse(fs.readFileSync(path).toString()) : {};
+    return fs.existsSync(path) ? parseFileSync(path) : {};
   }
 
   private _write(path: string, output: Output): void {
