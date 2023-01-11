@@ -52,8 +52,15 @@ contract BalancerTokenAdmin is IBalancerTokenAdmin, SingletonAuthentication, Ree
     uint256 private _startEpochSupply;
     uint256 private _rate;
 
-    constructor(IVault vault, IBalancerToken balancerToken) SingletonAuthentication(vault) {
+    uint256 private immutable _initialMintAllowance;
+
+    constructor(
+        IVault vault,
+        IBalancerToken balancerToken,
+        uint256 initialMintAllowance
+    ) SingletonAuthentication(vault) {
         _balancerToken = balancerToken;
+        _initialMintAllowance = initialMintAllowance;
     }
 
     /**
@@ -131,8 +138,10 @@ contract BalancerTokenAdmin is IBalancerTokenAdmin, SingletonAuthentication, Ree
         require(_balancerToken.getRoleMemberCount(minterRole) == 1, "Multiple minters exist");
         require(_balancerToken.getRoleMemberCount(snapshotRole) == 1, "Multiple snapshotters exist");
 
+        _balancerToken.mint(msg.sender, _initialMintAllowance);
+
         // As BAL inflation is now enforced by this contract we can initialise the relevant variables.
-        _startEpochSupply = _balancerToken.totalSupply();
+        _startEpochSupply = _balancerToken.totalSupply().sub(_initialMintAllowance);
         _startEpochTime = block.timestamp;
         _rate = INITIAL_RATE;
         emit MiningParametersUpdated(INITIAL_RATE, _startEpochSupply);
@@ -149,7 +158,7 @@ contract BalancerTokenAdmin is IBalancerTokenAdmin, SingletonAuthentication, Ree
         }
 
         require(
-            _balancerToken.totalSupply().add(amount) <= _availableSupply(),
+            _balancerToken.totalSupply().sub(_initialMintAllowance).add(amount) <= _availableSupply(),
             "Mint amount exceeds remaining available supply"
         );
         _balancerToken.mint(to, amount);
