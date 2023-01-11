@@ -28,6 +28,7 @@ import { getArtifactFromContractOutput } from './artifact';
 const TASKS_DIRECTORY = path.resolve(__dirname, '../tasks');
 const DEPRECATED_DIRECTORY = path.join(TASKS_DIRECTORY, 'deprecated');
 const SCRIPTS_DIRECTORY = path.join(TASKS_DIRECTORY, 'scripts');
+const POOLS_DIRECTORY = path.join(TASKS_DIRECTORY, 'pools');
 
 export enum TaskMode {
   LIVE, // Deploys and saves outputs
@@ -218,6 +219,11 @@ export default class Task {
     const scriptsDir = this._dirAt(SCRIPTS_DIRECTORY, this.id, false);
     if (this._existsDir(scriptsDir)) {
       return scriptsDir;
+    }
+
+    const poolsDir = this._dirAt(POOLS_DIRECTORY, this.id, false);
+    if (this._existsDir(poolsDir)) {
+      return poolsDir;
     }
 
     throw Error(`Could not find a directory at ${nonDeprecatedDir}, ${deprecatedDir} or ${scriptsDir}`);

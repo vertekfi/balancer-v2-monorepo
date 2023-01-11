@@ -6,7 +6,6 @@ import { ethers } from 'hardhat';
 import { RawVaultDeployment } from '@balancer-labs/v2-helpers/src/models/vault/types';
 import TypesConverter from '@balancer-labs/v2-helpers/src/models/types/TypesConverter';
 import { Contract } from 'ethers';
-import { FP_100_PCT } from '@balancer-labs/v2-helpers/src/numbers';
 
 export default async (task: Task, { force, from }: TaskRunOptions = {}): Promise<void> => {
   let input = task.input() as RawVaultDeployment;
