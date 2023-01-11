@@ -37,10 +37,9 @@ import "@balancer-labs/v2-solidity-utils/contracts/math/Math.sol";
 contract BalancerTokenAdmin is IBalancerTokenAdmin, SingletonAuthentication, ReentrancyGuard {
     using Math for uint256;
 
-    // Initial inflation rate of 145k BAL per week.
-    uint256 public constant override INITIAL_RATE = (145000 * 1e18) / uint256(1 weeks); // BAL has 18 decimals
-    uint256 public constant override RATE_REDUCTION_TIME = 365 days;
-    uint256 public constant override RATE_REDUCTION_COEFFICIENT = 1189207115002721024; // 2 ** (1/4) * 1e18
+    uint256 public constant override INITIAL_RATE = (55000 * 1e18) / uint256(1 weeks);
+    uint256 public constant override RATE_REDUCTION_TIME = 7 days;
+    uint256 public constant override RATE_REDUCTION_COEFFICIENT = 1010000000000000000;
     uint256 public constant override RATE_DENOMINATOR = 1e18;
 
     IBalancerToken private immutable _balancerToken;
