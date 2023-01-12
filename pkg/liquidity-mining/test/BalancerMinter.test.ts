@@ -1,6 +1,7 @@
 import { ethers } from 'hardhat';
 import { Contract } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
+import { parseFixed } from '@ethersproject/bignumber';
 
 import { deploy } from '@balancer-labs/v2-helpers/src/contract';
 import { expect } from 'chai';
@@ -18,7 +19,9 @@ describe('BalancerMinter', () => {
   });
 
   sharedBeforeEach(async () => {
-    const balancerTokenAdmin = await deploy('BalancerTokenAdmin', { args: [ZERO_ADDRESS, ZERO_ADDRESS] });
+    const balancerTokenAdmin = await deploy('BalancerTokenAdmin', {
+      args: [ZERO_ADDRESS, ZERO_ADDRESS, parseFixed('1250000', 18)],
+    });
     minterContract = await deploy('BalancerMinter', { args: [balancerTokenAdmin.address, ZERO_ADDRESS] });
   });
 

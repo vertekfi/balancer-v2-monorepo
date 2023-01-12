@@ -18,8 +18,10 @@ const DEFAULT_ADMIN_ROLE = ZERO_BYTES32;
 const MINTER_ROLE = solidityKeccak256(['string'], ['MINTER_ROLE']);
 const SNAPSHOT_ROLE = solidityKeccak256(['string'], ['SNAPSHOT_ROLE']);
 
-const INITIAL_RATE = parseFixed('145000', 18).div(WEEK);
-const RATE_REDUCTION_COEFFICIENT = BigNumber.from('1189207115002721024');
+const INITIAL_RATE = parseFixed('55000', 18).div(WEEK);
+const RATE_REDUCTION_COEFFICIENT = BigNumber.from('1010000000000000000');
+
+const INITIAL_MINT_ALLOWANCE = parseFixed('1250000', 18);
 
 describe('BalancerTokenAdmin', () => {
   let vault: Vault;
@@ -34,7 +36,7 @@ describe('BalancerTokenAdmin', () => {
   sharedBeforeEach('deploy authorizer', async () => {
     vault = await Vault.create({ admin });
     token = await deploy('TestBalancerToken', { args: [admin.address, 'Balancer', 'BAL'] });
-    tokenAdmin = await deploy('BalancerTokenAdmin', { args: [vault.address, token.address] });
+    tokenAdmin = await deploy('BalancerTokenAdmin', { args: [vault.address, token.address, INITIAL_MINT_ALLOWANCE] });
   });
 
   describe('constructor', () => {
@@ -119,17 +121,19 @@ describe('BalancerTokenAdmin', () => {
             const { timestamp } = await ethers.provider.getBlock(receipt.blockHash);
 
             expect(await tokenAdmin.getStartEpochTime()).to.be.eq(timestamp);
-            expect(await tokenAdmin.getStartEpochSupply()).to.be.eq(await token.totalSupply());
+            const adjustedCheck = (await token.totalSupply()).sub(INITIAL_MINT_ALLOWANCE);
+            expect(await tokenAdmin.getStartEpochSupply()).to.be.eq(adjustedCheck);
             expect(await tokenAdmin.getInflationRate()).to.be.eq(INITIAL_RATE);
           });
 
           it('it emits an MiningParametersUpdated event', async () => {
             const tx = await tokenAdmin.connect(admin).activate();
             const receipt = await tx.wait();
+            const adjustedCheck = (await token.totalSupply()).sub(INITIAL_MINT_ALLOWANCE);
 
             expectEvent.inReceipt(receipt, 'MiningParametersUpdated', {
               rate: INITIAL_RATE,
-              supply: await token.totalSupply(),
+              supply: adjustedCheck,
             });
           });
         });
@@ -163,7 +167,7 @@ describe('BalancerTokenAdmin', () => {
 
           const currentRate = await tokenAdmin.rate();
           expectedRate = currentRate.mul(ONE).div(RATE_REDUCTION_COEFFICIENT);
-          expectedStartSupply = (await tokenAdmin.getStartEpochSupply()) + currentRate.mul(365 * DAY);
+          expectedStartSupply = (await tokenAdmin.getStartEpochSupply()) + currentRate.mul(7 * DAY);
         });
 
         it('update the mining parameters', async () => {
@@ -227,7 +231,7 @@ describe('BalancerTokenAdmin', () => {
       context('when trying to mint more than the available supply', () => {
         it('reverts', async () => {
           const availableSupply = await tokenAdmin.getAvailableSupply();
-          const totalSupply = await token.totalSupply();
+          const totalSupply = (await token.totalSupply()).sub(INITIAL_MINT_ALLOWANCE);
           const rate = await tokenAdmin.rate();
 
           const invalidMintAmount = availableSupply.sub(totalSupply).add(rate.mul(10));
