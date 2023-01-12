@@ -6,8 +6,9 @@ export type GaugeSystemDeployment = {
   AuthorizerAdaptor: string;
 };
 
-const AuthorizerAdaptor = new Task('20221229-vault', TaskMode.READ_ONLY).output().AuthorizerAdaptor;
-const BalancerTokenAdmin = new Task('20230111-balancer-token-admin', TaskMode.READ_ONLY).output().AuthorizerAdaptor;
+const AuthorizerAdaptor = new Task('20221229-vault', TaskMode.READ_ONLY, 'goerli').output().AuthorizerAdaptor;
+const BalancerTokenAdmin = new Task('20230111-balancer-token-admin', TaskMode.READ_ONLY, 'goerli').output()
+  .AuthorizerAdaptor;
 
 export default {
   AuthorizerAdaptor,

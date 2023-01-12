@@ -13,7 +13,7 @@ export default async (task: Task, { force, from }: TaskRunOptions = {}): Promise
   );
   await task.save({ BalancerTokenAdmin: tokenAdmin.address });
 
-  // grant default admin role
-
-  // action id stuff to allow activate call
+  // grant default admin role?
+  // action id stuff to allow activate call?
+  // Or handle elsewhere
 };
