@@ -82,10 +82,4 @@ export default async (task: Task, { force, from }: TaskRunOptions = {}): Promise
     vault.authorizer.address,
     admin
   );
-
-  const contract = new Contract(
-    '0x6bff6a69ff157682d1fc0a8f4666b60234cd5cf1',
-    ['function isValidFeeType(uint256) public view returns (bool)'],
-    admin
-  );
 };

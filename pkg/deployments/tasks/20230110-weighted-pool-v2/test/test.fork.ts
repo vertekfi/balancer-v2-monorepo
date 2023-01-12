@@ -10,7 +10,9 @@ import { ZERO_ADDRESS } from '@balancer-labs/v2-helpers/src/constants';
 describeForkTest('WeightedPoolFactory', 'goerli', 8294247, function () {
   let owner: SignerWithAddress;
   let task: Task;
-  let factory: Contract, vault: Contract, authorizer: Contract, wbnb: Contract, busd: Contract;
+  let factory: Contract;
+  let vault: Contract;
+  let authorizer: Contract;
 
   const NAME = 'Weighted Pool';
   const SYMBOL = NAME;
@@ -21,11 +23,6 @@ describeForkTest('WeightedPoolFactory', 'goerli', 8294247, function () {
   const weights = [fp(0.5), fp(0.5)];
   const rateProviders = [ZERO_ADDRESS, ZERO_ADDRESS];
   const swapFeePercentage = fp(0.01);
-
-  const initialBalanceWBNB = fp(1e6);
-  const initialBalanceBUSD = fp(1e6);
-  const initialBalances = [initialBalanceWBNB, initialBalanceBUSD];
-  const upscaledInitialBalances = [initialBalanceWBNB, initialBalanceBUSD];
 
   before('run task', async () => {
     task = new Task('20230110-weighted-pool-v2', TaskMode.TEST, getForkedNetwork(hre));
@@ -41,9 +38,6 @@ describeForkTest('WeightedPoolFactory', 'goerli', 8294247, function () {
     const vaultTask = new Task('20221229-vault', TaskMode.READ_ONLY, getForkedNetwork(hre));
     vault = await vaultTask.deployedInstance('Vault');
     authorizer = await vaultTask.deployedInstance('TimelockAuthorizer');
-
-    // wbnb = await task.instanceAt('IERC20', WBNB);
-    // busd = await task.instanceAt('IERC20', BUSD);
   });
 
   it('deploys', async () => {
