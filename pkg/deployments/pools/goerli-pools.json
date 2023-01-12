@@ -1,0 +1,319 @@
+[
+  {
+    "created": true,
+    "initJoinComplete": true,
+    "chainId": 5,
+    "name": "That Main Pool Thing",
+    "symbol": "VRTK-BNB",
+    "assetManager": "0x0000000000000000000000000000000000000000",
+    "type": "Weighted",
+    "txHash": "0xda9b04e25f1789cd28644f471a2f5ee5a5564ae5a74e51d796bedd87cc1b85c3",
+    "poolId": "0x3e9f7b85e8ee2107aeca28677b6b416fa60b6200000200000000000000000002",
+    "poolAddress": "0x3e9f7B85E8Ee2107aeca28677b6B416fA60b6200",
+    "date": "1/3/2023, 12:07:50 PM",
+    "initialBalances": ["10800", "100"],
+    "tokenInfo": [
+      {
+        "address": "0xaFbf7fB9Fa206089041218dF93c8B3A1Bb9F4497",
+        "weight": "0.8",
+        "initialBalance": "10800",
+        "symbol": "VRTK"
+      },
+      {
+        "address": "0xe4E96Cf369D4d604Bedc4d7962F94D53E4B5e3C6",
+        "weight": "0.2",
+        "initialBalance": "100"
+      }
+    ],
+    "deploymentArgs": {
+      "name": "That Main Pool Thing",
+      "symbol": "VRTK-BNB",
+      "owner": "0x891eFc56f5CD6580b2fEA416adC960F2A6156494",
+      "tokens": [
+        "0xaFbf7fB9Fa206089041218dF93c8B3A1Bb9F4497",
+        "0xe4E96Cf369D4d604Bedc4d7962F94D53E4B5e3C6"
+      ],
+      "swapFeePercentage": "0.01",
+      "weights": ["0.8", "0.2"],
+      "assetManagers": [
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000"
+      ]
+    },
+    "gauge": {
+      "address": "0xf090783eEE18089916133781c781AbcAD26c73Db",
+      "startingWeight": "0.7",
+      "added": true,
+      "controllerTxHash": "0x90d69c24ccb70581557df51fd04661165071cb7188fd69bdf6a708e95ea3e42b",
+      "txHash": "0x418bece4452c591f11732104a22d15135a9cdd09248b057e3732bfd6df3cf557"
+    },
+    "isVePool": true
+  },
+  {
+    "created": true,
+    "initJoinComplete": true,
+    "chainId": 5,
+    "name": "Pegging Enthusiast",
+    "symbol": "AMES-BUSD",
+    "assetManager": "0x0000000000000000000000000000000000000000",
+    "type": "Weighted",
+    "txHash": "0xe8c6e9fa2cced710c0142fa43dad5bd55aeb93d94557dd3be2c7568d25d84069",
+    "poolId": "0x47761dc0a5836d6746310b5999e2a45557237774000200000000000000000003",
+    "poolAddress": "0x47761dc0a5836D6746310B5999E2a45557237774",
+    "date": "1/3/2023, 12:09:39 PM",
+    "initialBalances": ["10000", "20000"],
+    "tokenInfo": [
+      {
+        "address": "0x7faA8158FaA037CC7516eF1f6864af44d75654AE",
+        "weight": "0.5",
+        "initialBalance": "10000",
+        "symbol": "BUSD"
+      },
+      {
+        "address": "0xd71114b3AD1Ec657B4194E0B3b7C9fC71C7bdbEF",
+        "weight": "0.5",
+        "initialBalance": "20000",
+        "symbol": "AMES"
+      }
+    ],
+    "deploymentArgs": {
+      "name": "Pegging Enthusiast",
+      "symbol": "AMES-BUSD",
+      "owner": "0x891eFc56f5CD6580b2fEA416adC960F2A6156494",
+      "tokens": [
+        "0x7faA8158FaA037CC7516eF1f6864af44d75654AE",
+        "0xd71114b3AD1Ec657B4194E0B3b7C9fC71C7bdbEF"
+      ],
+      "swapFeePercentage": "0.01",
+      "weights": ["0.5", "0.5"],
+      "assetManagers": [
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000"
+      ]
+    },
+    "gauge": {
+      "address": "0xd348e36E33cbb94748942a131f9aAdaeA8850cf4",
+      "startingWeight": "0",
+      "added": true,
+      "txHash": "0xcb28424cb4e6ef965b8e2637beba1e8e4f563f3b919ce59ae4c852e196da1c09",
+      "controllerTxHash": "0xd761ede6ea60ab6855efa48f4cf69a9c8d56e1bd1296a59eb054d88bbaada4f5"
+    },
+    "isVePool": false
+  },
+  {
+    "created": true,
+    "initJoinComplete": true,
+    "chainId": 5,
+    "name": "Bear Market Breather",
+    "symbol": "ETH-BUSD",
+    "assetManager": "0x0000000000000000000000000000000000000000",
+    "type": "Weighted",
+    "txHash": "0xa09fb917ae61e5fffd80af74ca4f4aae82bf4ee89647fc14594a2c6645866c81",
+    "poolId": "0xe741a3fa0d0e3222c82fb6d0c7c7384723e83d97000200000000000000000004",
+    "poolAddress": "0xe741a3fA0d0E3222c82fb6d0C7C7384723E83d97",
+    "date": "1/5/2023, 5:32:46 PM",
+    "initialBalances": ["20", "25000"],
+    "tokenInfo": [
+      {
+        "address": "0x7c85523739053769278a1E5b1F39389b0e5CF539",
+        "weight": "0.5",
+        "initialBalance": "20",
+        "symbol": "WETH"
+      },
+      {
+        "address": "0x7faA8158FaA037CC7516eF1f6864af44d75654AE",
+        "weight": "0.5",
+        "initialBalance": "25000",
+        "symbol": "BUSD"
+      }
+    ],
+    "deploymentArgs": {
+      "name": "Bear Market Breather",
+      "symbol": "ETH-BUSD",
+      "owner": "0x891eFc56f5CD6580b2fEA416adC960F2A6156494",
+      "tokens": [
+        "0x7c85523739053769278a1E5b1F39389b0e5CF539",
+        "0x7faA8158FaA037CC7516eF1f6864af44d75654AE"
+      ],
+      "swapFeePercentage": "0.005",
+      "weights": ["0.5", "0.5"],
+      "assetManagers": [
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000"
+      ]
+    },
+    "gauge": {
+      "address": "0x01c13541F5110D207F1d1BCA383337D63b2B5444",
+      "startingWeight": "0",
+      "added": true,
+      "txHash": "0xd84ad7c7156f4b23468bd87a8aba29a30dd6fc897f7646afb2ab2785acda7d99",
+      "controllerTxHash": "0x6c7d6c5fbfae34b87c1890c716e3dafcd95ec9588f9a54394a095c5e39545187"
+    },
+    "isVePool": false
+  },
+  {
+    "created": true,
+    "initJoinComplete": true,
+    "chainId": 5,
+    "name": "A Share of Seigniorage",
+    "symbol": "ASHARE-BUSD",
+    "assetManager": "0x0000000000000000000000000000000000000000",
+    "type": "Weighted",
+    "txHash": "0x5f263e98e0213a65840fd6aba5969d3ac6c4dcf67989b556eb02f824675a336d",
+    "poolId": "0x6c229d0ef593eb45c81c4d396cb7c2e17b09593d000200000000000000000005",
+    "poolAddress": "0x6C229d0eF593eb45C81C4d396cb7c2e17B09593d",
+    "date": "1/6/2023, 10:42:38 PM",
+    "initialBalances": ["24000", "6000"],
+    "tokenInfo": [
+      {
+        "address": "0x626355410729525eec3fd5628D840d683F24456d",
+        "weight": "0.8",
+        "initialBalance": "24000",
+        "symbol": "ASHARE"
+      },
+      {
+        "address": "0x7faA8158FaA037CC7516eF1f6864af44d75654AE",
+        "weight": "0.2",
+        "initialBalance": "6000",
+        "symbol": "BUSD"
+      }
+    ],
+    "deploymentArgs": {
+      "name": "A Share of Seigniorage",
+      "symbol": "ASHARE-BUSD",
+      "owner": "0x891eFc56f5CD6580b2fEA416adC960F2A6156494",
+      "tokens": [
+        "0x626355410729525eec3fd5628D840d683F24456d",
+        "0x7faA8158FaA037CC7516eF1f6864af44d75654AE"
+      ],
+      "swapFeePercentage": "0.005",
+      "weights": ["0.8", "0.2"],
+      "assetManagers": [
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000"
+      ]
+    },
+    "gauge": {
+      "address": "0x8E40553b4B1D0F5150C3D8bf22136AE64771db1a",
+      "startingWeight": "0",
+      "added": true,
+      "txHash": "0x812972f154b08fd34e1052093b686df82c1b7f9907aa14742f065002d73424f3",
+      "controllerTxHash": "0x1ecaf60385b51c9a56cd12723ee540f271b634d85e7a4b8d07824e439e2834f2"
+    },
+    "isVePool": false
+  },
+  {
+    "created": true,
+    "initJoinComplete": true,
+    "chainId": 5,
+    "name": "Cool Pool Name Here",
+    "symbol": "VRTK-BUSD",
+    "assetManager": "0x0000000000000000000000000000000000000000",
+    "type": "Weighted",
+    "txHash": "0x9dfe2be9d4c642e2f7705836869dcf5261f9405c88f352461fc4dbc9ebc1db16",
+    "poolId": "0xc107b351b787e64c0a59a1f44cb393704da07d3f000200000000000000000006",
+    "poolAddress": "0xC107b351B787e64c0A59A1F44cb393704Da07D3F",
+    "date": "1/7/2023, 9:13:43 AM",
+    "initialBalances": ["10000", "40000"],
+    "tokenInfo": [
+      {
+        "address": "0x7faA8158FaA037CC7516eF1f6864af44d75654AE",
+        "weight": "0.2",
+        "initialBalance": "10000",
+        "symbol": "BUSD"
+      },
+      {
+        "address": "0xaFbf7fB9Fa206089041218dF93c8B3A1Bb9F4497",
+        "weight": "0.8",
+        "initialBalance": "40000",
+        "symbol": "VRTK"
+      }
+    ],
+    "deploymentArgs": {
+      "name": "Cool Pool Name Here",
+      "symbol": "VRTK-BUSD",
+      "owner": "0x891eFc56f5CD6580b2fEA416adC960F2A6156494",
+      "tokens": [
+        "0x7faA8158FaA037CC7516eF1f6864af44d75654AE",
+        "0xaFbf7fB9Fa206089041218dF93c8B3A1Bb9F4497"
+      ],
+      "swapFeePercentage": "0.005",
+      "weights": ["0.2", "0.8"],
+      "assetManagers": [
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000"
+      ]
+    },
+    "gauge": {
+      "address": "0x10eE890fC395506bb9Ca33C8e2F2C5adfD33Ac0E",
+      "startingWeight": "0",
+      "added": true,
+      "txHash": "0xc6d59dd636d3a8f1eff10bb74554b3444c58e1e4b7cfafa46ee4c13d42d05670",
+      "controllerTxHash": "0x1427e00cd494373ab3036bc51db980646492513956cf58a4b25cd6bb8179747a"
+    },
+    "isVePool": false
+  },
+  {
+    "created": true,
+    "initJoinComplete": true,
+    "chainId": 5,
+    "name": "Slow and Steady",
+    "symbol": "BUSD-USDC-USDT-DAI",
+    "assetManager": "0x0000000000000000000000000000000000000000",
+    "type": "Stable",
+    "txHash": "0x33ac807c72e0cb8ef82415baaadb0767476de5bb45797b630aa6853452a38acb",
+    "poolId": "0xd282a9db923f04660245ecb19eadab30d1620383000000000000000000000009",
+    "poolAddress": "0xD282A9DB923F04660245ecB19EaDaB30d1620383",
+    "date": "1/7/2023, 7:30:04 PM",
+    "initialBalances": ["10000", "10000", "10000", "10000"],
+    "tokenInfo": [
+      {
+        "address": "0x1ab40126513036458e00Cc827FFd9e7D0436219d",
+        "initialBalance": "10000",
+        "symbol": "USDT"
+      },
+      {
+        "address": "0x5277c419719d5E71394371c6189171c83e37fd7c",
+        "initialBalance": "10000",
+        "symbol": "USDC"
+      },
+      {
+        "address": "0x732Af42A96256668feB49526e7C7BB6611086867",
+        "initialBalance": "10000",
+        "symbol": "DAI"
+      },
+      {
+        "address": "0x7faA8158FaA037CC7516eF1f6864af44d75654AE",
+        "initialBalance": "10000",
+        "symbol": "BUSD"
+      }
+    ],
+    "deploymentArgs": {
+      "name": "Slow and Steady",
+      "symbol": "BUSD-USDC-USDT-DAI",
+      "owner": "0x891eFc56f5CD6580b2fEA416adC960F2A6156494",
+      "tokens": [
+        "0x1ab40126513036458e00Cc827FFd9e7D0436219d",
+        "0x5277c419719d5E71394371c6189171c83e37fd7c",
+        "0x732Af42A96256668feB49526e7C7BB6611086867",
+        "0x7faA8158FaA037CC7516eF1f6864af44d75654AE"
+      ],
+      "swapFeePercentage": "0.002",
+      "assetManagers": [
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000"
+      ],
+      "amp": 2000
+    },
+    "gauge": {
+      "address": "0xcfD9570A037AAD79B2d1B64652eC9a20495dE42b",
+      "startingWeight": "0",
+      "added": true,
+      "txHash": "0x3fe22aa9586fc603a7a2f03d0b6649269143ad59e67990a3c20a225701b94f82",
+      "controllerTxHash": "0xa3cc0fe537ff6db1e1a34ced4de709c44fbac60ca78cfe21ac0746ea8599ee8b"
+    },
+    "isVePool": false
+  }
+]
