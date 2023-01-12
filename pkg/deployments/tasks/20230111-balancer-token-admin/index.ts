@@ -5,13 +5,10 @@ import { TokenAdminDeployment } from './input';
 export default async (task: Task, { force, from }: TaskRunOptions = {}): Promise<void> => {
   const input = task.input() as TokenAdminDeployment;
 
-  const tokenAdmin = await task.deployAndVerify(
-    'BalancerTokenAdmin',
-    [input.vault, input.governanceToken, input.initialMintAllowance],
-    from,
-    force
-  );
-  await task.save({ BalancerTokenAdmin: tokenAdmin.address });
+  const args = [input.vault, input.governanceToken, input.initialMintAllowance];
+  const tokenAdmin = await task.deploy('BalancerTokenAdmin', args, from, force);
+
+  await task.verify('BalancerTokenAdmin', tokenAdmin.address, args);
 
   // grant default admin role?
   // action id stuff to allow activate call?
