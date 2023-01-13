@@ -8,11 +8,16 @@ import TokenList from '@balancer-labs/v2-helpers/src/models/tokens/TokenList';
 import { Contract } from 'ethers';
 import { deploy } from '@balancer-labs/v2-helpers/src/contract';
 import Token from '@balancer-labs/v2-helpers/src/models/tokens/Token';
+import { expect } from 'chai';
+import { parseUnits } from 'ethers/lib/utils';
+import { range } from 'lodash';
 
-describe('WeightedPool', function () {
+describe('WeightedRateProviders', function () {
   let tokens: TokenList;
   let lp: SignerWithAddress;
   let rateProviders: Contract[];
+
+  const MAX_TOKENS = 2;
 
   // CGOLD token
   let CGOLD: Token;
@@ -31,9 +36,11 @@ describe('WeightedPool', function () {
   const CGOLD_TARGET_PRICE = CGOLD_RATIO_TO_GOLD.mul(PRICE_ONE_OZ_OF_GOLD);
 
   // Weights and balances set for 80/20 going for ~$64.30 CGOLD token value at start
-  const WEIGHTS = [0.8, 0.2];
+  // const WEIGHTS = [parseUnits('0.8'), parseUnits('0.2')];
+  const WEIGHTS = range(1000, 1000 + MAX_TOKENS);
+
   // $10k in * 0.8 = 8000 / 64.3 target price = 124.4167..
-  const initialBalances = [124.416796, 2000];
+  const initialBalances = [fp(124.416796), fp(2000)];
 
   const POOL_SWAP_FEE_PERCENTAGE = fp(0.01);
 
@@ -55,10 +62,14 @@ describe('WeightedPool', function () {
         tokens,
         weights: WEIGHTS,
         swapFeePercentage: POOL_SWAP_FEE_PERCENTAGE,
-        rateProviders: [],
+        rateProviders: rateProviders.map((r) => r.address),
       });
 
       await pool.init({ initialBalances, recipient: lp });
     });
+  });
+
+  it('should ', () => {
+    expect(true).to.be.true;
   });
 });
