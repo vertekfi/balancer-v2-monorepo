@@ -492,6 +492,7 @@ __metadata:
     nodemon: ^2.0.20
     prettier: ^2.7.1
     prettier-plugin-solidity: v1.0.0-alpha.59
+    rimraf: ^4.0.4
     solhint: ^3.2.0
     solhint-plugin-prettier: ^0.0.4
     ts-node: ^10.9.1
@@ -11868,6 +11869,15 @@ resolve@^1.22.1:
   bin:
     rimraf: bin.js
   checksum: f0de3e445581e64a8a077af476cc30708e659f5779ec2ca2a161556d0792aa318a685923798ae22055b4ecd02b9aff444ef619578f7af53cf8e0e248031e3dee
+  languageName: node
+  linkType: hard
+
+"rimraf@npm:^4.0.4":
+  version: 4.0.4
+  resolution: "rimraf@npm:4.0.4"
+  bin:
+    rimraf: dist/cjs/src/bin.js
+  checksum: 98701dc68df3961e39d0919b7a201a61c8355f399bf7647e926125624e55fcea52974eb34bfa2c2a8b4d7751f76f7b9ae90d22b912e0eca4d0cb046ada7ebd9b
   languageName: node
   linkType: hard
 
