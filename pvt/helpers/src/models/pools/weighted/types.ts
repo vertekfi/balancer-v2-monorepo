@@ -75,7 +75,6 @@ export interface PoolFeeConfig {
   bptJoinFee: number;
   bptExitFee: number;
   coreToken: string;
-  feeReceiver: string;
 }
 
 export type SwapWeightedPool = {

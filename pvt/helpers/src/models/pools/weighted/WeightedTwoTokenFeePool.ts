@@ -48,4 +48,8 @@ export class WeightedTwoTokenFeePool extends WeightedPool {
   static async create(params: RawWeightedTwoTokenFeePoolDeployment): Promise<WeightedTwoTokenFeePool> {
     return WeightedTwoTokenFeePoolDeployer.deploy(params);
   }
+
+  async getPoolConfig() {
+    return this.instance.getPoolConfig();
+  }
 }

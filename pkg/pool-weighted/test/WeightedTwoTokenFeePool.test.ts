@@ -23,13 +23,11 @@ describe('WeightedTwoTokenFeePool', function () {
     sellFee: 25000,
     bptJoinFee: 10000,
     bptExitFee: 10000,
-    feeReceiver: '',
     coreToken: '',
   };
 
   before('setup signers', async () => {
     [owner] = await ethers.getSigners();
-    feeConfig.feeReceiver = owner.address;
   });
 
   sharedBeforeEach('deploy tokens', async () => {
@@ -56,5 +54,7 @@ describe('WeightedTwoTokenFeePool', function () {
     await pool.init({ initialBalances, recipient: owner });
   });
 
-  it('should ', async () => {});
+  it('should ', async () => {
+    console.log(await pool.getPoolConfig());
+  });
 });
