@@ -61,6 +61,23 @@ export type WeightedPoolDeployment = {
   from?: SignerWithAddress;
 };
 
+export interface RawWeightedTwoTokenFeePoolDeployment extends RawWeightedPoolDeployment {
+  feeConfig: PoolFeeConfig;
+}
+
+export interface WeightedTwoTokenFeePoolDeployment extends WeightedPoolDeployment {
+  feeConfig: PoolFeeConfig;
+}
+
+export interface PoolFeeConfig {
+  buyFee: number;
+  sellFee: number;
+  bptJoinFee: number;
+  bptExitFee: number;
+  coreToken: string;
+  feeReceiver: string;
+}
+
 export type SwapWeightedPool = {
   in: number | Token;
   out: number | Token;

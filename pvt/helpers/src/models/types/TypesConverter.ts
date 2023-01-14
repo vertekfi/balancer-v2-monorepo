@@ -15,6 +15,9 @@ import {
   WeightedPoolDeployment,
   WeightedPoolType,
   BasePoolRights,
+  RawWeightedTwoTokenFeePoolDeployment,
+  WeightedTwoTokenFeePoolDeployment,
+  PoolFeeConfig,
 } from '../pools/weighted/types';
 import {
   RawTokenApproval,
@@ -108,6 +111,29 @@ export default {
       aumFeeId,
       factoryVersion,
       poolVersion,
+    };
+  },
+
+  toWeightedTwoTokenFeePoolDeployment(params: RawWeightedTwoTokenFeePoolDeployment): WeightedTwoTokenFeePoolDeployment {
+    const base = this.toWeightedPoolDeployment(params);
+
+    // let feeConfig: PoolFeeConfig
+    // if (params.feeConfig) {
+    //   feeConfig = params.feeConfig
+    // } else {
+    //   feeConfig = {
+    //     buyFee: 10000,
+    //     sellFee: 25000,
+    //     feeReceiver: '',
+    //     bptJoinFee: 1000,
+    //     bptExitFee: 10000,
+    //     coreToken: ''
+    //   }
+    // }
+
+    return {
+      ...base,
+      feeConfig: params.feeConfig,
     };
   },
 

@@ -31,10 +31,10 @@ contract WeightedTwoTokenFeePool is BaseWeightedPool, WeightedPoolProtocolFees {
         uint256 swapFeePercentage;
     }
 
-    struct FeePoolConfig {
+    struct PoolFeeConfig {
         uint256 buyFee;
         uint256 sellFee;
-        uint256 bptJoinFee; // not sure if this something to keep
+        uint256 bptJoinFee;
         uint256 bptExitFee;
         address coreToken;
         address feeReceiver;
@@ -48,7 +48,7 @@ contract WeightedTwoTokenFeePool is BaseWeightedPool, WeightedPoolProtocolFees {
     uint256 private constant _MAX_BPT_EXIT_FEE = 10000;
     uint256 private constant _FEE_DENOMINATOR = 1000;
 
-    FeePoolConfig private _poolConfig;
+    PoolFeeConfig private _poolConfig;
 
     IERC20 internal immutable _token0;
     IERC20 internal immutable _token1;
@@ -73,7 +73,7 @@ contract WeightedTwoTokenFeePool is BaseWeightedPool, WeightedPoolProtocolFees {
         uint256 pauseWindowDuration,
         uint256 bufferPeriodDuration,
         address owner,
-        FeePoolConfig memory poolConfig
+        PoolFeeConfig memory poolConfig
     )
         BaseWeightedPool(
             vault,
@@ -128,7 +128,7 @@ contract WeightedTwoTokenFeePool is BaseWeightedPool, WeightedPoolProtocolFees {
         _normalizedWeight1 = normalizedWeight1;
     }
 
-    function getPoolConfig() public view returns (FeePoolConfig memory) {
+    function getPoolConfig() public view returns (PoolFeeConfig memory) {
         return _poolConfig;
     }
 
@@ -145,7 +145,7 @@ contract WeightedTwoTokenFeePool is BaseWeightedPool, WeightedPoolProtocolFees {
         return amountOut - feeAmount;
     }
 
-    function getSwapFeeForAction(SwapRequest memory swapRequest, FeePoolConfig memory feeConfig)
+    function getSwapFeeForAction(SwapRequest memory swapRequest, PoolFeeConfig memory feeConfig)
         public
         pure
         returns (uint256 feeAmount, bool isSell)
