@@ -151,6 +151,10 @@ export default class WeightedPool extends BasePool {
     return this.instance.getNormalizedWeights();
   }
 
+  async getATHRateProduct(): Promise<BigNumber> {
+    return this.instance.getATHRateProduct();
+  }
+
   async version(): Promise<string[]> {
     return this.instance.version();
   }

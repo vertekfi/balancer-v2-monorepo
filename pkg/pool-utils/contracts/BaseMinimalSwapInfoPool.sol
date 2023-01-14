@@ -29,6 +29,11 @@ import "./BasePool.sol";
 abstract contract BaseMinimalSwapInfoPool is IMinimalSwapInfoPool, BasePool {
     // Swap Hooks
 
+    /**
+     * Does some pre/post processing and delegates the actual math work to derived contracts.
+     * Determines SwapKind and calls the related swap hook on derived contracts.
+     * Subtracts the swap fee amount from the request before passing to `_onSwapGivenIn`.
+     */
     function onSwap(
         SwapRequest memory request,
         uint256 balanceTokenIn,
