@@ -15,11 +15,17 @@
 pragma solidity ^0.7.0;
 pragma experimental ABIEncoderV2;
 
+import "@balancer-labs/v2-solidity-utils/contracts/openzeppelin/SafeERC20.sol";
 import "./WeightedPoolProtocolFees.sol";
 import "./BaseWeightedPool.sol";
 
+// TODO: Can possibly just inherit from WeightedPool and override as needed
+
 contract WeightedTwoTokenFeePool is BaseWeightedPool, WeightedPoolProtocolFees {
     using FixedPoint for uint256;
+    using SafeERC20 for IERC20;
+
+    enum FeeType { BUY, SELL, BPT_JOIN, BPT_EXIT }
 
     struct NewPoolParams {
         string name;
@@ -37,7 +43,6 @@ contract WeightedTwoTokenFeePool is BaseWeightedPool, WeightedPoolProtocolFees {
         uint256 bptJoinFee;
         uint256 bptExitFee;
         address coreToken;
-        address feeReceiver;
     }
 
     uint256 private constant _MAX_TOKENS = 2;
@@ -46,7 +51,7 @@ contract WeightedTwoTokenFeePool is BaseWeightedPool, WeightedPoolProtocolFees {
     uint256 private constant _MAX_TOTAL_FEE = _MAX_BUY_FEE + _MAX_SELL_FEE;
     uint256 private constant _MAX_BPT_JOIN_FEE = 10000;
     uint256 private constant _MAX_BPT_EXIT_FEE = 10000;
-    uint256 private constant _FEE_DENOMINATOR = 1000;
+    uint256 public constant FEE_DENOMINATOR = 1000;
 
     PoolFeeConfig private _poolConfig;
 
@@ -65,6 +70,8 @@ contract WeightedTwoTokenFeePool is BaseWeightedPool, WeightedPoolProtocolFees {
 
     uint256 internal immutable _normalizedWeight0;
     uint256 internal immutable _normalizedWeight1;
+
+    event FeePaid(IERC20 token, uint256 amount, FeeType feeType);
 
     constructor(
         NewPoolParams memory params,
@@ -102,7 +109,6 @@ contract WeightedTwoTokenFeePool is BaseWeightedPool, WeightedPoolProtocolFees {
         require(poolConfig.sellFee <= _MAX_SELL_FEE, "Sell fee too high");
         require(poolConfig.bptJoinFee <= _MAX_BPT_JOIN_FEE, "BPT join fee too high");
         require(poolConfig.bptExitFee <= _MAX_BPT_EXIT_FEE, "BPT exit fee too high");
-        require(poolConfig.feeReceiver != address(0), "Fee receiver not set");
 
         _poolConfig = poolConfig;
 
@@ -142,6 +148,8 @@ contract WeightedTwoTokenFeePool is BaseWeightedPool, WeightedPoolProtocolFees {
         uint256 amountOut = super._onSwapGivenIn(swapRequest, currentBalanceTokenIn, currentBalanceTokenOut);
         (uint256 feeAmount, ) = getSwapFeeForAction(swapRequest, _poolConfig);
 
+        // TODO: Check inheritance chain to consider recovery or paused state and skip any fees
+
         return amountOut - feeAmount;
     }
 
@@ -155,9 +163,10 @@ contract WeightedTwoTokenFeePool is BaseWeightedPool, WeightedPoolProtocolFees {
         isSell = address(swapRequest.tokenIn) == feeConfig.coreToken;
         uint256 fee = isSell ? feeConfig.sellFee : feeConfig.buyFee;
 
-        // What are the "scaling" concerns here?
+        // TODO: What are the "scaling" concerns here?
         // Base contract will scale down before going back to the vault
-        feeAmount = swapRequest.amount.mulUp(fee).divDown(_FEE_DENOMINATOR);
+        // Mention of "direction" scaled to in various place to reference
+        feeAmount = swapRequest.amount.mulUp(fee).divDown(FEE_DENOMINATOR);
     }
 
     // Join/Exit overrides
@@ -216,6 +225,8 @@ contract WeightedTwoTokenFeePool is BaseWeightedPool, WeightedPoolProtocolFees {
      */
     function getActualSupply() public view returns (uint256) {
         uint256 supply = totalSupply();
+
+        // TODO: Check this for BPT fee's as well
 
         (uint256 protocolFeesToBeMinted, ) = _getPreJoinExitProtocolFees(
             getInvariant(),
@@ -293,4 +304,54 @@ contract WeightedTwoTokenFeePool is BaseWeightedPool, WeightedPoolProtocolFees {
     {
         return super._isOwnerOnlyAction(actionId);
     }
+
+    function _sendProtocolFee(
+        IERC20 token,
+        uint256 amount,
+        FeeType feeType
+    ) internal {
+        token.safeTransfer(address(getProtocolFeesCollector()), amount);
+
+        emit FeePaid(token, amount, feeType);
+    }
+
+    // Admin
+
+    function setBuyFee(uint256 fee) external authenticate {
+        require(fee <= _MAX_BUY_FEE, "Buy fee too high");
+
+        _poolConfig.buyFee = fee;
+    }
+
+    function setSellFee(uint256 fee) external authenticate {
+        require(fee <= _MAX_SELL_FEE, "Sell fee too high");
+
+        _poolConfig.sellFee = fee;
+    }
+
+    function setBptJoinFee(uint256 fee) external authenticate {
+        require(fee <= _MAX_BPT_JOIN_FEE, "Join fee too high");
+
+        _poolConfig.bptJoinFee = fee;
+    }
+
+    function setBptExitFee(uint256 fee) external authenticate {
+        require(fee <= _MAX_BPT_EXIT_FEE, "Exit fee too high");
+
+        _poolConfig.bptExitFee = fee;
+    }
+
+    // /**
+    //  * Withdraw token, other token, BPT's.
+    //  * This can go right to the fee collector.
+    //  */
+    // function withdrawFees() external authenticate {
+    //     //
+    //     address payable token = payable(_poolConfig.coreToken);
+    //     token.sendValue(IERC(_poolConfig.coreToken).balanceOf(address(this)));
+
+    //     // other token
+
+    //     // BPT's
+    // }
 }
