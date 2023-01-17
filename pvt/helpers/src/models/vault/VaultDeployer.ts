@@ -67,9 +67,9 @@ export default {
 
   async _deployReal(deployment: VaultDeployment, authorizer: Contract): Promise<Contract> {
     const { from, pauseWindowDuration, bufferPeriodDuration } = deployment;
-    const weth = await TokensDeployer.deployToken({ symbol: 'WETH' });
+    // const weth = await TokensDeployer.deployToken({ symbol: 'WETH' });
 
-    const args = [authorizer.address, weth.address, pauseWindowDuration, bufferPeriodDuration];
+    const args = [authorizer.address, deployment.WETH, pauseWindowDuration, bufferPeriodDuration];
     return deploy('v2-vault/Vault', { args, from });
   },
 

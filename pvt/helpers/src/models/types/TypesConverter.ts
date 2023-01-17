@@ -42,7 +42,17 @@ export default {
     if (!rootTransferDelay) rootTransferDelay = MONTH;
     if (!maxYieldValue) maxYieldValue = FP_100_PCT;
     if (!maxAUMValue) maxAUMValue = FP_100_PCT;
-    return { mocked, admin, pauseWindowDuration, bufferPeriodDuration, rootTransferDelay, maxYieldValue, maxAUMValue };
+    if (!params.WETH) throw new Error('WETH not provided');
+    return {
+      mocked,
+      admin,
+      pauseWindowDuration,
+      bufferPeriodDuration,
+      rootTransferDelay,
+      maxYieldValue,
+      maxAUMValue,
+      WETH: params.WETH,
+    };
   },
 
   toRawVaultDeployment(params: RawWeightedPoolDeployment): RawVaultDeployment {

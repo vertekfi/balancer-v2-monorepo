@@ -12,6 +12,7 @@ export type RawVaultDeployment = {
   maxYieldValue?: BigNumberish;
   maxAUMValue?: BigNumberish;
   from?: SignerWithAddress;
+  WETH?: string;
 };
 
 export type VaultDeployment = {
@@ -21,6 +22,7 @@ export type VaultDeployment = {
   rootTransferDelay: number;
   maxYieldValue: BigNumberish;
   maxAUMValue: BigNumberish;
+  WETH: string;
   admin?: SignerWithAddress;
   from?: SignerWithAddress;
 };
