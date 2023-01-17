@@ -22,7 +22,7 @@ export default {
     // This sequence breaks the circular dependency between authorizer, vault, adaptor and entrypoint.
     // First we deploy the vault, adaptor and entrypoint with a basic authorizer.
     const basicAuthorizer = await this._deployBasicAuthorizer(admin);
-    const vault = await (mocked ? this._deployMocked : this._deployReal)(deployment, basicAuthorizer);
+    const vault = await (mocked ? this._deployMocked : this._deployReal)(deployment, basicAuthorizer.address);
     const authorizerAdaptor = await this._deployAuthorizerAdaptor(vault.address, from);
     const adaptorEntrypoint = await this._deployAuthorizerAdaptorEntrypoint(authorizerAdaptor.address);
     const protocolFeeProvider = await this._deployProtocolFeeProvider(
@@ -65,16 +65,16 @@ export default {
     await vault.connect(admin).setAuthorizer(timelockAuthAddress);
   },
 
-  async _deployReal(deployment: VaultDeployment, authorizer: Contract): Promise<Contract> {
-    const { from, pauseWindowDuration, bufferPeriodDuration } = deployment;
+  async _deployReal(deployment: VaultDeployment, authorizerAddress: string): Promise<Contract> {
+    const { from, pauseWindowDuration, bufferPeriodDuration, WETH } = deployment;
     // const weth = await TokensDeployer.deployToken({ symbol: 'WETH' });
 
-    const args = [authorizer.address, deployment.WETH, pauseWindowDuration, bufferPeriodDuration];
+    const args = [authorizerAddress, WETH, pauseWindowDuration, bufferPeriodDuration];
     return deploy('v2-vault/Vault', { args, from });
   },
 
-  async _deployMocked({ from }: VaultDeployment, authorizer: Contract): Promise<Contract> {
-    return deploy('v2-pool-utils/MockVault', { from, args: [authorizer.address] });
+  async _deployMocked({ from }: VaultDeployment, authorizerAddress: string): Promise<Contract> {
+    return deploy('v2-pool-utils/MockVault', { from, args: [authorizerAddress] });
   },
 
   async _deployBasicAuthorizer(admin: SignerWithAddress): Promise<Contract> {
