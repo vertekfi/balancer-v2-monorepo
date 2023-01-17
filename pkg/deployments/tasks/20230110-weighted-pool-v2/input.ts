@@ -8,16 +8,11 @@ export type WeightedPoolDeployment = {
   bufferPeriodDuration: number;
 };
 
-const data = new Task('20221229-vault', TaskMode.READ_ONLY).output({
-  ensure: true,
-  network: 'goerli',
-});
+const vaultTask = new Task('20221229-vault', TaskMode.READ_ONLY);
 
-const input: WeightedPoolDeployment = {
-  Vault: data['Vault'],
-  ProtocolFeePercentagesProvider: data['ProtocolFeePercentagesProvider'],
+export default {
+  Vault: vaultTask,
+  ProtocolFeePercentagesProvider: vaultTask,
   initialPauseWindowDuration: DAY * 270,
   bufferPeriodDuration: DAY * 90,
 };
-
-export default input;

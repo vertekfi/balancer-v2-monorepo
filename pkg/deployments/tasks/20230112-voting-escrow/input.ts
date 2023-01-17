@@ -5,9 +5,7 @@ export type GaugeSystemDeployment = {
   AuthorizerAdaptor: string;
 };
 
-const network = 'goerli';
-
-const AuthorizerAdaptor = new Task('20221229-vault', TaskMode.READ_ONLY, network).output().AuthorizerAdaptor;
+const AuthorizerAdaptor = new Task('20221229-vault', TaskMode.READ_ONLY);
 
 export default {
   AuthorizerAdaptor,

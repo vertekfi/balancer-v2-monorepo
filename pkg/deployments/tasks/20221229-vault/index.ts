@@ -2,11 +2,9 @@ import Task from '../../src/task';
 import { TaskRunOptions } from '../../src/types';
 
 import VaultDeployer from '@balancer-labs/v2-helpers/src/models/vault/VaultDeployer';
-import { ethers } from 'hardhat';
 import { RawVaultDeployment } from '@balancer-labs/v2-helpers/src/models/vault/types';
 import TypesConverter from '@balancer-labs/v2-helpers/src/models/types/TypesConverter';
-import { Contract } from 'ethers';
-import { FP_100_PCT } from '@balancer-labs/v2-helpers/src/numbers';
+import { getSigner } from '../../src/signers';
 
 export default async (task: Task, { force, from }: TaskRunOptions = {}): Promise<void> => {
   let input = task.input() as RawVaultDeployment;
@@ -33,7 +31,7 @@ export default async (task: Task, { force, from }: TaskRunOptions = {}): Promise
    * Save and verify as needed. Some contracts may deploy others during construction
    */
 
-  const admin = (await ethers.getSigners())[0];
+  const admin = await getSigner();
 
   // TimelockAuthorizer
   await task.save({ TimelockAuthorizer: vault.authorizer.address });
