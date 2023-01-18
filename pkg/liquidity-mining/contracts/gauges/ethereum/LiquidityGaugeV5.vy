@@ -374,6 +374,7 @@ def _update_liquidity_limit(addr: address, l: uint256, L: uint256):
     voting_balance: uint256 = VotingEscrowBoost(VEBOOST_PROXY).adjusted_balance_of(addr)
     voting_total: uint256 = ERC20(VOTING_ESCROW).totalSupply()
 
+    # Uses 40% of the liquidity value
     lim: uint256 = l * TOKENLESS_PRODUCTION / 100
     if voting_total > 0:
         lim += L * voting_balance / voting_total * (100 - TOKENLESS_PRODUCTION) / 100

@@ -7,9 +7,10 @@ import { deploy, deployedAt } from '@balancer-labs/v2-helpers/src/contract';
 import Vault from '@balancer-labs/v2-helpers/src/models/vault/Vault';
 import { expect } from 'chai';
 import { actionId } from '@balancer-labs/v2-helpers/src/models/misc/actions';
-import { MAX_UINT256, ZERO_ADDRESS } from '@balancer-labs/v2-helpers/src/constants';
+import { ZERO_ADDRESS } from '@balancer-labs/v2-helpers/src/constants';
 import { sharedBeforeEach } from '@balancer-labs/v2-common/sharedBeforeEach';
-import Token from '@balancer-labs/v2-helpers/src/models/tokens/Token';
+import { fp } from '@balancer-labs/v2-helpers/src/numbers';
+import { formatEther } from 'ethers/lib/utils';
 
 describe('LiquidityGaugeV5', () => {
   let vault: Vault;
@@ -17,7 +18,6 @@ describe('LiquidityGaugeV5', () => {
   let gaugeFactory: Contract;
   let adaptorEntrypoint: Contract;
   let lpToken: Contract;
-  let gauge: Contract;
 
   let admin: SignerWithAddress, other: SignerWithAddress;
 
@@ -25,14 +25,22 @@ describe('LiquidityGaugeV5', () => {
     [, admin, other] = await ethers.getSigners();
   });
 
-  sharedBeforeEach('setups contracts', async () => {
+  sharedBeforeEach('setup mock contracts', async () => {
     vault = await Vault.create({ admin });
     const adaptor = vault.authorizerAdaptor;
     adaptorEntrypoint = vault.authorizerAdaptorEntrypoint;
 
     // Mock items not relevant to current fee testing
 
-    gaugeController = await deploy('MockGaugeController', { args: [ZERO_ADDRESS, adaptor.address] });
+    lpToken = await deploy('v2-solidity-utils/ERC20Mock', {
+      args: ['token', 'token'],
+    });
+
+    const votingEscrow = await deploy('VotingEscrow', {
+      args: [lpToken.address, '', '', adaptor.address],
+    });
+    // Can't use zero for ve contract here
+    gaugeController = await deploy('MockGaugeController', { args: [votingEscrow.address, adaptor.address] });
 
     const veDelegation = await deploy('MockVeDelegation');
     const balToken = await deploy('TestBalancerToken', {
@@ -54,27 +62,36 @@ describe('LiquidityGaugeV5', () => {
     await gaugeController.add_type('Ethereum', 0);
   });
 
-  sharedBeforeEach('create gauge', async () => {
-    lpToken = await deploy('TestBalancerToken', {
-      args: [admin.address, 'TestBalancerToken', 'TestBalancerToken'],
-    });
-    // approve once at the start since this is not a test concern
-
-    gauge = await deployGauge(lpToken.address);
-
-    await lpToken.connect(other).approve(gauge.address, MAX_UINT256);
-    await gaugeController.add_gauge(gauge.address, 0);
-  });
-
-  async function deployGauge(poolAddress: string): Promise<Contract> {
+  async function deployGauge(): Promise<Contract> {
     // cap doesn't matter for this
-    const tx = await gaugeFactory.create(poolAddress, BigNumber.from(0));
+    const tx = await gaugeFactory.create(lpToken.address, BigNumber.from(0));
     const event = expectEvent.inReceipt(await tx.wait(), 'GaugeCreated');
 
-    return deployedAt('LiquidityGaugeV5', event.args.gauge);
+    const gauge = await deployedAt('LiquidityGaugeV5', event.args.gauge);
+
+    // Throw it on mock controller while we're here
+    await gaugeController.add_gauge(gauge.address, 0);
+
+    return gauge;
+  }
+
+  async function doUserDeposit(gauge: Contract, amount: BigNumber) {
+    // Give user tokens to deposit
+    await lpToken.mint(other.address, amount);
+    await lpToken.connect(other).approve(gauge.address, amount);
+
+    await gauge.connect(other)['deposit(uint256)'](amount);
+
+    // expect(await gauge.balanceOf(other.address)).to.equal(amount);
   }
 
   describe('setting deposit fee', () => {
+    let gauge: Contract;
+
+    sharedBeforeEach('create gauge', async () => {
+      gauge = await deployGauge();
+    });
+
     it('starts at zero', async () => {
       expect(await gauge.getDepositFee()).to.equal(0);
     });
@@ -115,6 +132,12 @@ describe('LiquidityGaugeV5', () => {
   });
 
   describe('setting withdraw fee', () => {
+    let gauge: Contract;
+
+    sharedBeforeEach('create gauge', async () => {
+      gauge = await deployGauge();
+    });
+
     it('starts at zero', async () => {
       expect(await gauge.getWithdrawFee()).to.equal(0);
     });
@@ -154,16 +177,19 @@ describe('LiquidityGaugeV5', () => {
   });
 
   describe('user deposit', () => {
+    let gauge: Contract;
+    const amount = fp(100);
+
+    sharedBeforeEach('create gauge', async () => {
+      gauge = await deployGauge();
+      await doUserDeposit(gauge, amount);
+    });
+
     context('when deposit fee is not set', () => {
       it('does not takes a deposit fee', async () => {
         // sanity check
-        expect(await gauge.getWithdrawFee()).to.equal(0);
-
-        // need ERC20 lp_token to verify balances against
-        // need to call initialize on gauge
+        expect(await gauge.getDepositFee()).to.equal(0);
       });
-
-      it('correctly credits user lp token balance', async () => {});
     });
 
     context('when deposit fee is set', () => {
@@ -176,6 +202,12 @@ describe('LiquidityGaugeV5', () => {
   });
 
   describe('user withdraw', () => {
+    let gauge: Contract;
+
+    sharedBeforeEach('create gauge', async () => {
+      gauge = await deployGauge();
+    });
+
     context('when withdraw fee is not set', () => {
       it('does not takes a withdraw fee', async () => {
         // sanity check
