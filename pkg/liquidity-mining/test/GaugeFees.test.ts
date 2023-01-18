@@ -14,7 +14,6 @@ import Token from '@balancer-labs/v2-helpers/src/models/tokens/Token';
 describe('LiquidityGaugeV5', () => {
   let vault: Vault;
   let gaugeController: Contract;
-  let gaugeImplementation: Contract;
   let gaugeFactory: Contract;
   let adaptorEntrypoint: Contract;
   let lpToken: Contract;
@@ -47,7 +46,7 @@ describe('LiquidityGaugeV5', () => {
       args: [tokenAdmin.address, gaugeController.address],
     });
 
-    gaugeImplementation = await deploy('LiquidityGaugeV5', {
+    const gaugeImplementation = await deploy('LiquidityGaugeV5', {
       args: [balMinter.address, veDelegation.address, adaptor.address],
     });
 
@@ -60,8 +59,10 @@ describe('LiquidityGaugeV5', () => {
       args: [admin.address, 'TestBalancerToken', 'TestBalancerToken'],
     });
     // approve once at the start since this is not a test concern
-    await lpToken.connect(other).approve(gaugeImplementation.address, MAX_UINT256);
+
     gauge = await deployGauge(lpToken.address);
+
+    await lpToken.connect(other).approve(gauge.address, MAX_UINT256);
     await gaugeController.add_gauge(gauge.address, 0);
   });
 
@@ -75,42 +76,38 @@ describe('LiquidityGaugeV5', () => {
 
   describe('setting deposit fee', () => {
     it('starts at zero', async () => {
-      expect(await gaugeImplementation.getDepositFee()).to.equal(0);
+      expect(await gauge.getDepositFee()).to.equal(0);
     });
 
     context('when caller is not authorized', () => {
       it('reverts', async () => {
-        await expect(gaugeImplementation.connect(other).setDepositFee(0)).to.be.revertedWith('Unauthorized');
+        await expect(gauge.connect(other).setDepositFee(0)).to.be.revertedWith('Unauthorized');
       });
     });
 
     context('when caller is authorized', () => {
       sharedBeforeEach('authorize caller', async () => {
-        const setDepositFeeAction = await actionId(
-          vault.authorizerAdaptor,
-          'setDepositFee',
-          gaugeImplementation.interface
-        );
+        const setDepositFeeAction = await actionId(vault.authorizerAdaptor, 'setDepositFee', gauge.interface);
 
         await vault.grantPermissionsGlobally([setDepositFeeAction], admin);
       });
 
       it('sets the deposit fee', async () => {
         const fee = 100;
-        const calldata = gaugeImplementation.interface.encodeFunctionData('setDepositFee', [fee]);
-        await adaptorEntrypoint.connect(admin).performAction(gaugeImplementation.address, calldata);
+        const calldata = gauge.interface.encodeFunctionData('setDepositFee', [fee]);
+        await adaptorEntrypoint.connect(admin).performAction(gauge.address, calldata);
 
-        expect(await gaugeImplementation.getDepositFee()).to.equal(fee);
+        expect(await gauge.getDepositFee()).to.equal(fee);
       });
 
       it('can not be set above max cap', async () => {
-        const max = (await gaugeImplementation.getMaxDepositFee()).toNumber();
+        const max = (await gauge.getMaxDepositFee()).toNumber();
         const fee = max + 1;
-        const calldata = gaugeImplementation.interface.encodeFunctionData('setDepositFee', [fee]);
+        const calldata = gauge.interface.encodeFunctionData('setDepositFee', [fee]);
 
-        await expect(
-          adaptorEntrypoint.connect(admin).performAction(gaugeImplementation.address, calldata)
-        ).to.be.revertedWith('Fee exceeds allowed maximum');
+        await expect(adaptorEntrypoint.connect(admin).performAction(gauge.address, calldata)).to.be.revertedWith(
+          'Fee exceeds allowed maximum'
+        );
       });
 
       it('emits fee update event', async () => {});
@@ -119,41 +116,37 @@ describe('LiquidityGaugeV5', () => {
 
   describe('setting withdraw fee', () => {
     it('starts at zero', async () => {
-      expect(await gaugeImplementation.getWithdrawFee()).to.equal(0);
+      expect(await gauge.getWithdrawFee()).to.equal(0);
     });
 
     context('when caller is not authorized', () => {
       it('reverts', async () => {
-        await expect(gaugeImplementation.connect(other).setWithdrawFee(0)).to.be.revertedWith('Unauthorized');
+        await expect(gauge.connect(other).setWithdrawFee(0)).to.be.revertedWith('Unauthorized');
       });
     });
 
     context('when caller is authorized', () => {
       sharedBeforeEach('authorize caller', async () => {
-        const setWithdrawFeeAction = await actionId(
-          vault.authorizerAdaptor,
-          'setWithdrawFee',
-          gaugeImplementation.interface
-        );
+        const setWithdrawFeeAction = await actionId(vault.authorizerAdaptor, 'setWithdrawFee', gauge.interface);
         await vault.grantPermissionsGlobally([setWithdrawFeeAction], admin);
       });
 
       it('sets the withdraw fee', async () => {
         const fee = 100;
-        const calldata = gaugeImplementation.interface.encodeFunctionData('setWithdrawFee', [fee]);
-        await adaptorEntrypoint.connect(admin).performAction(gaugeImplementation.address, calldata);
+        const calldata = gauge.interface.encodeFunctionData('setWithdrawFee', [fee]);
+        await adaptorEntrypoint.connect(admin).performAction(gauge.address, calldata);
 
-        expect(await gaugeImplementation.getWithdrawFee()).to.equal(fee);
+        expect(await gauge.getWithdrawFee()).to.equal(fee);
       });
 
       it('can not be set above max cap', async () => {
-        const maxWithdraw = (await gaugeImplementation.getMaxWithdrawFee()).toNumber();
+        const maxWithdraw = (await gauge.getMaxWithdrawFee()).toNumber();
         const fee = maxWithdraw + 1;
-        const calldata = gaugeImplementation.interface.encodeFunctionData('setWithdrawFee', [fee]);
+        const calldata = gauge.interface.encodeFunctionData('setWithdrawFee', [fee]);
 
-        await expect(
-          adaptorEntrypoint.connect(admin).performAction(gaugeImplementation.address, calldata)
-        ).to.be.revertedWith('Fee exceeds allowed maximum');
+        await expect(adaptorEntrypoint.connect(admin).performAction(gauge.address, calldata)).to.be.revertedWith(
+          'Fee exceeds allowed maximum'
+        );
       });
 
       it('emits fee update event', async () => {});
@@ -164,7 +157,7 @@ describe('LiquidityGaugeV5', () => {
     context('when deposit fee is not set', () => {
       it('does not takes a deposit fee', async () => {
         // sanity check
-        expect(await gaugeImplementation.getWithdrawFee()).to.equal(0);
+        expect(await gauge.getWithdrawFee()).to.equal(0);
 
         // need ERC20 lp_token to verify balances against
         // need to call initialize on gauge
@@ -186,7 +179,7 @@ describe('LiquidityGaugeV5', () => {
     context('when withdraw fee is not set', () => {
       it('does not takes a withdraw fee', async () => {
         // sanity check
-        expect(await gaugeImplementation.getWithdrawFee()).to.equal(0);
+        expect(await gauge.getWithdrawFee()).to.equal(0);
       });
 
       it('gives the user the correct lp token amount', async () => {});
