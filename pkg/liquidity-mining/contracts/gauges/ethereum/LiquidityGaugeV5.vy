@@ -985,6 +985,22 @@ def getMaxWithdrawFee() -> uint256:
 
 @external
 @view
+def getDepositFee() -> uint256:
+    """
+    @notice Returns the current value for _deposit_fee.
+    """
+    return self._deposit_fee
+
+@external
+@view
+def getWithdrawFee() -> uint256:
+    """
+    @notice Returns the current value for _withdraw_fee.
+    """
+    return self._withdraw_fee
+
+@external
+@view
 def getAccumulatedFees() -> uint256:
     """
     @notice Returns the current amount of fees due to the ProtocolFeesCollector.
