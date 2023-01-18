@@ -81,11 +81,19 @@ describe('LiquidityGaugeV5', () => {
         const fee = 100;
         const calldata = gaugeImplementation.interface.encodeFunctionData('setDepositFee', [fee]);
         await adaptorEntrypoint.connect(admin).performAction(gaugeImplementation.address, calldata);
-        // await gaugeImplementation.connect(admin).setDepositFee(fee);
+
         expect(await gaugeImplementation.getDepositFee()).to.equal(fee);
       });
 
-      it('can not be set above max cap', async () => {});
+      it('can not be set above max cap', async () => {
+        const max = (await gaugeImplementation.getMaxDepositFee()).toNumber();
+        const fee = max + 1;
+        const calldata = gaugeImplementation.interface.encodeFunctionData('setDepositFee', [fee]);
+
+        await expect(
+          adaptorEntrypoint.connect(admin).performAction(gaugeImplementation.address, calldata)
+        ).to.be.revertedWith('Fee exceeds allowed maximum');
+      });
     });
   });
 
@@ -102,13 +110,31 @@ describe('LiquidityGaugeV5', () => {
 
     context('when caller is authorized', () => {
       sharedBeforeEach('authorize caller', async () => {
-        const setWithdrawFeeAction = await actionId(adaptorEntrypoint, 'setWithdrawFee', gaugeImplementation.interface);
-        await vault.grantPermissionsGlobally([setWithdrawFeeAction], gaugeImplementation);
+        const setWithdrawFeeAction = await actionId(
+          vault.authorizerAdaptor,
+          'setWithdrawFee',
+          gaugeImplementation.interface
+        );
+        await vault.grantPermissionsGlobally([setWithdrawFeeAction], admin);
       });
 
-      it('sets the withdraw fee', async () => {});
+      it('sets the withdraw fee', async () => {
+        const fee = 100;
+        const calldata = gaugeImplementation.interface.encodeFunctionData('setWithdrawFee', [fee]);
+        await adaptorEntrypoint.connect(admin).performAction(gaugeImplementation.address, calldata);
 
-      it('can not be set above max cap', async () => {});
+        expect(await gaugeImplementation.getWithdrawFee()).to.equal(fee);
+      });
+
+      it('can not be set above max cap', async () => {
+        const maxWithdraw = (await gaugeImplementation.getMaxWithdrawFee()).toNumber();
+        const fee = maxWithdraw + 1;
+        const calldata = gaugeImplementation.interface.encodeFunctionData('setWithdrawFee', [fee]);
+
+        await expect(
+          adaptorEntrypoint.connect(admin).performAction(gaugeImplementation.address, calldata)
+        ).to.be.revertedWith('Fee exceeds allowed maximum');
+      });
     });
   });
 
@@ -116,13 +142,13 @@ describe('LiquidityGaugeV5', () => {
     context('when deposit fee is not set', () => {
       it('does not takes a deposit fee', async () => {});
 
-      it('sets the users correctly credits user lp token balance', async () => {});
+      it('correctly credits user lp token balance', async () => {});
     });
 
     context('when deposit fee is set', () => {
       it('takes the current deposit fee', async () => {});
 
-      it('sets the users correctly credits user lp token balance', async () => {});
+      it('correctly credits user lp token balance', async () => {});
 
       it('updates pending accumulated protocol fees', async () => {});
     });
