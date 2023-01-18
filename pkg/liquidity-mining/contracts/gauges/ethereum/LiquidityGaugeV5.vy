@@ -38,6 +38,9 @@ interface VotingEscrow:
 interface VotingEscrowBoost:
     def adjusted_balance_of(_account: address) -> uint256: view
 
+interface Vault:
+    def getProtocolFeesCollector() -> address: view
+
 
 event Deposit:
     provider: indexed(address)
@@ -71,6 +74,19 @@ event RewardDistributorUpdated:
 event RelativeWeightCapChanged:
     new_relative_weight_cap: uint256
 
+event DepositFeeChanged:
+    new_deposit_fee: uint256
+
+event WithdrawFeeChanged:
+    new_withdraw_fee: uint256
+
+event FeeCharged:
+    fee_amount: uint256
+    fee_type: uint256 # 0 = deposit, 1 = withdraw
+
+event FeesWithdraw:
+    amount: uint256
+
 struct Reward:
     token: address
     distributor: address
@@ -101,6 +117,17 @@ VOTING_ESCROW: immutable(address)
 VEBOOST_PROXY: immutable(address)
 
 MAX_RELATIVE_WEIGHT_CAP: constant(uint256) = 10 ** 18
+
+
+MAX_DEPOSIT_FEE: constant(uint256) = 1000
+MAX_WITHDRAW_FEE: constant(uint256) = 1000
+FEE_DENOMINATOR: constant(uint256) = 10000
+
+_deposit_fee: uint256
+_withdraw_fee: uint256
+_accumulated_fees: uint256
+
+_protocolFeesCollector: immutable(address)
 
 # ERC20
 balanceOf: public(HashMap[address, uint256])
@@ -169,6 +196,7 @@ def __init__(minter: address, veBoostProxy: address, authorizerAdaptor: address)
     balTokenAdmin: address = Minter(minter).getBalancerTokenAdmin()
     BAL_TOKEN_ADMIN = balTokenAdmin
     BAL_VAULT = TokenAdmin(balTokenAdmin).getVault()
+    _protocolFeesCollector = Vault(BAL_VAULT).getProtocolFeesCollector()
     AUTHORIZER_ADAPTOR = authorizerAdaptor
     GAUGE_CONTROLLER = gaugeController
     MINTER = minter
@@ -860,7 +888,7 @@ def initialize(_lp_token: address, relative_weight_cap: uint256):
     self.lp_token = _lp_token
 
     symbol: String[32] = ERC20Extended(_lp_token).symbol()
-    name: String[64] = concat("Balancer ", symbol, " Gauge Deposit")
+    name: String[64] = concat("Vertek ", symbol, " Gauge Deposit")
 
     self.name = name
     self.symbol = concat(symbol, "-gauge")
@@ -907,3 +935,70 @@ def getMaxRelativeWeightCap() -> uint256:
     @notice Returns the maximum value that can be set to _relative_weight_cap attribute.
     """
     return MAX_RELATIVE_WEIGHT_CAP
+
+@external
+def setDepositFee(_fee: uint256):
+    """
+    @notice Sets a new deposit fee for the gauge.
+            The value shall be normalized to 1e18, and not greater than MAX_DEPOSIT_FEE.
+    @param New gauge deposit fee.
+    """
+    assert msg.sender == AUTHORIZER_ADAPTOR, "Unauthorized" 
+    assert _fee <= MAX_DEPOSIT_FEE, "Fee exceeds allowed maximum"
+
+    self._deposit_fee = _fee
+    log DepositFeeChanged(_fee)
+
+@external
+def setWithdrawFee(_fee: uint256):
+    """
+    @notice Sets a new withdraw for the gauge.
+            The value shall be normalized to 1e18, and not greater than MAX_WITHDRAW_FEE.
+    @param New gauge withdraw fee.
+    """
+    assert msg.sender == AUTHORIZER_ADAPTOR, "Unauthorized" 
+    assert _fee <= MAX_WITHDRAW_FEE, "Fee exceeds allowed maximum"
+
+    self._withdraw_fee = _fee
+    log WithdrawFeeChanged(_fee)
+
+@external
+@pure
+def getMaxDepositFee() -> uint256:
+    """
+    @notice Returns the maximum deposit fee that can be set to _deposit_fee.
+    """
+    return MAX_DEPOSIT_FEE
+
+
+@external
+@pure
+def getMaxWithdrawFee() -> uint256:
+    """
+    @notice Returns the maximum withdraw fee that can be set to _withdraw_fee.
+    """
+    return MAX_WITHDRAW_FEE
+
+@external
+@view
+def getAccumulatedFees() -> uint256:
+    """
+    @notice Returns the current amount of fees due to the ProtocolFeesCollector.
+    """
+    return self._accumulated_fees
+
+# @external
+# @nonreentrant("lock")
+# def withdrawFees():
+#     """
+#     @notice Withdraws accumulated fees to the ProtocolFeesCollector. Fee are not transfered when taken to save users gas.
+#     """
+#     assert msg.sender == AUTHORIZER_ADAPTOR, "Unauthorized" 
+#     
+#     need a transfer interface for the pool token or use the vyper ERC20 interface (Assuming it is the same. Have to look at it)
+#     fee_amount = self._accumulated_fees
+#     self._accumulated_fees = 0
+#     ERC20(self.lp_token).transfer(fee_amount, self._protocol_fees_collector) # require success or something of that nature
+#     
+#     log FeesWithdraw(fee_amount)
+    
