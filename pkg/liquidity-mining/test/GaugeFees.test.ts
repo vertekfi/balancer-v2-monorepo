@@ -1,16 +1,15 @@
 import { ethers } from 'hardhat';
-import { Contract } from 'ethers';
+import { BigNumber, Contract } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 
 import * as expectEvent from '@balancer-labs/v2-helpers/src/test/expectEvent';
-import { deploy } from '@balancer-labs/v2-helpers/src/contract';
+import { deploy, deployedAt } from '@balancer-labs/v2-helpers/src/contract';
 import Vault from '@balancer-labs/v2-helpers/src/models/vault/Vault';
 import { expect } from 'chai';
 import { actionId } from '@balancer-labs/v2-helpers/src/models/misc/actions';
-import { ANY_ADDRESS, ZERO_ADDRESS } from '@balancer-labs/v2-helpers/src/constants';
-import { GaugeType } from '@balancer-labs/balancer-js/src/types';
-import { fp } from '@balancer-labs/v2-helpers/src/numbers';
+import { MAX_UINT256, ZERO_ADDRESS } from '@balancer-labs/v2-helpers/src/constants';
 import { sharedBeforeEach } from '@balancer-labs/v2-common/sharedBeforeEach';
+import Token from '@balancer-labs/v2-helpers/src/models/tokens/Token';
 
 describe('LiquidityGaugeV5', () => {
   let vault: Vault;
@@ -18,6 +17,8 @@ describe('LiquidityGaugeV5', () => {
   let gaugeImplementation: Contract;
   let gaugeFactory: Contract;
   let adaptorEntrypoint: Contract;
+  let lpToken: Contract;
+  let gauge: Contract;
 
   let admin: SignerWithAddress, other: SignerWithAddress;
 
@@ -25,7 +26,7 @@ describe('LiquidityGaugeV5', () => {
     [, admin, other] = await ethers.getSigners();
   });
 
-  sharedBeforeEach('create gauge', async () => {
+  sharedBeforeEach('setups contracts', async () => {
     vault = await Vault.create({ admin });
     const adaptor = vault.authorizerAdaptor;
     adaptorEntrypoint = vault.authorizerAdaptorEntrypoint;
@@ -49,11 +50,28 @@ describe('LiquidityGaugeV5', () => {
     gaugeImplementation = await deploy('LiquidityGaugeV5', {
       args: [balMinter.address, veDelegation.address, adaptor.address],
     });
-    gaugeFactory = await deploy('MockLiquidityGaugeFactory', { args: [gaugeImplementation.address] });
 
+    gaugeFactory = await deploy('MockLiquidityGaugeFactory', { args: [gaugeImplementation.address] });
     await gaugeController.add_type('Ethereum', 0);
-    await gaugeController.add_gauge(gaugeImplementation.address, 0);
   });
+
+  sharedBeforeEach('create gauge', async () => {
+    lpToken = await deploy('TestBalancerToken', {
+      args: [admin.address, 'TestBalancerToken', 'TestBalancerToken'],
+    });
+    // approve once at the start since this is not a test concern
+    await lpToken.connect(other).approve(gaugeImplementation.address, MAX_UINT256);
+    gauge = await deployGauge(lpToken.address);
+    await gaugeController.add_gauge(gauge.address, 0);
+  });
+
+  async function deployGauge(poolAddress: string): Promise<Contract> {
+    // cap doesn't matter for this
+    const tx = await gaugeFactory.create(poolAddress, BigNumber.from(0));
+    const event = expectEvent.inReceipt(await tx.wait(), 'GaugeCreated');
+
+    return deployedAt('LiquidityGaugeV5', event.args.gauge);
+  }
 
   describe('setting deposit fee', () => {
     it('starts at zero', async () => {
@@ -94,6 +112,8 @@ describe('LiquidityGaugeV5', () => {
           adaptorEntrypoint.connect(admin).performAction(gaugeImplementation.address, calldata)
         ).to.be.revertedWith('Fee exceeds allowed maximum');
       });
+
+      it('emits fee update event', async () => {});
     });
   });
 
@@ -135,12 +155,20 @@ describe('LiquidityGaugeV5', () => {
           adaptorEntrypoint.connect(admin).performAction(gaugeImplementation.address, calldata)
         ).to.be.revertedWith('Fee exceeds allowed maximum');
       });
+
+      it('emits fee update event', async () => {});
     });
   });
 
   describe('user deposit', () => {
     context('when deposit fee is not set', () => {
-      it('does not takes a deposit fee', async () => {});
+      it('does not takes a deposit fee', async () => {
+        // sanity check
+        expect(await gaugeImplementation.getWithdrawFee()).to.equal(0);
+
+        // need ERC20 lp_token to verify balances against
+        // need to call initialize on gauge
+      });
 
       it('correctly credits user lp token balance', async () => {});
     });
@@ -156,7 +184,10 @@ describe('LiquidityGaugeV5', () => {
 
   describe('user withdraw', () => {
     context('when withdraw fee is not set', () => {
-      it('does not takes a withdraw fee', async () => {});
+      it('does not takes a withdraw fee', async () => {
+        // sanity check
+        expect(await gaugeImplementation.getWithdrawFee()).to.equal(0);
+      });
 
       it('gives the user the correct lp token amount', async () => {});
     });
@@ -183,7 +214,7 @@ describe('LiquidityGaugeV5', () => {
         // await vault.grantPermissionsGlobally([action], admin);
       });
 
-      it('transfers pending accumulated fees to the protocol fee collector', async () => {
+      it('transfers pending accumulated fees to the protocol fees collector', async () => {
         // there is a withdrawCollectedFees on the Vault class instance for this
       });
 

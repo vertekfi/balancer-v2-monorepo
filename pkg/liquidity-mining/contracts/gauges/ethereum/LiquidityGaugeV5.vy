@@ -891,7 +891,7 @@ def initialize(_lp_token: address, relative_weight_cap: uint256):
     @notice Contract constructor
     @param _lp_token Liquidity Pool contract address
     """
-    assert self.lp_token == ZERO_ADDRESS
+    assert self.lp_token == ZERO_ADDRESS, "Gauge already intiialized"
 
     self.lp_token = _lp_token
 
