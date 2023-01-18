@@ -1,5 +1,5 @@
 import { ethers } from 'hardhat';
-import { BigNumber, Contract } from 'ethers';
+import { BigNumber, Contract, ContractReceipt, ContractTransaction } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 
 import * as expectEvent from '@balancer-labs/v2-helpers/src/test/expectEvent';
@@ -7,7 +7,6 @@ import { deploy, deployedAt } from '@balancer-labs/v2-helpers/src/contract';
 import Vault from '@balancer-labs/v2-helpers/src/models/vault/Vault';
 import { expect } from 'chai';
 import { actionId } from '@balancer-labs/v2-helpers/src/models/misc/actions';
-import { ZERO_ADDRESS } from '@balancer-labs/v2-helpers/src/constants';
 import { sharedBeforeEach } from '@balancer-labs/v2-common/sharedBeforeEach';
 import { fp } from '@balancer-labs/v2-helpers/src/numbers';
 import { formatEther } from 'ethers/lib/utils';
@@ -81,8 +80,24 @@ describe('LiquidityGaugeV5', () => {
     await lpToken.connect(other).approve(gauge.address, amount);
 
     await gauge.connect(other)['deposit(uint256)'](amount);
+  }
 
-    // expect(await gauge.balanceOf(other.address)).to.equal(amount);
+  async function giveFunctionPermissions(gauge: Contract, functionName: string) {
+    const action = await actionId(vault.authorizerAdaptor, functionName, gauge.interface);
+    await vault.grantPermissionsGlobally([action], admin);
+  }
+
+  async function authorizeAndSetFeeAmount(
+    gauge: Contract,
+    feeSetterFunctionName: string,
+    fee: number
+  ): Promise<ContractReceipt> {
+    const action = await actionId(vault.authorizerAdaptor, feeSetterFunctionName, gauge.interface);
+    await vault.grantPermissionsGlobally([action], admin);
+
+    const calldata = gauge.interface.encodeFunctionData(feeSetterFunctionName, [fee]);
+    const tx = await adaptorEntrypoint.connect(admin).performAction(gauge.address, calldata);
+    return await tx.wait();
   }
 
   describe('setting deposit fee', () => {
@@ -103,31 +118,30 @@ describe('LiquidityGaugeV5', () => {
     });
 
     context('when caller is authorized', () => {
-      sharedBeforeEach('authorize caller', async () => {
-        const setDepositFeeAction = await actionId(vault.authorizerAdaptor, 'setDepositFee', gauge.interface);
-
-        await vault.grantPermissionsGlobally([setDepositFeeAction], admin);
-      });
-
       it('sets the deposit fee', async () => {
         const fee = 100;
-        const calldata = gauge.interface.encodeFunctionData('setDepositFee', [fee]);
-        await adaptorEntrypoint.connect(admin).performAction(gauge.address, calldata);
+        await authorizeAndSetFeeAmount(gauge, 'setDepositFee', fee);
 
         expect(await gauge.getDepositFee()).to.equal(fee);
       });
 
       it('can not be set above max cap', async () => {
         const max = (await gauge.getMaxDepositFee()).toNumber();
-        const fee = max + 1;
-        const calldata = gauge.interface.encodeFunctionData('setDepositFee', [fee]);
+        const aboveMaxFee = max + 1;
 
-        await expect(adaptorEntrypoint.connect(admin).performAction(gauge.address, calldata)).to.be.revertedWith(
+        await expect(authorizeAndSetFeeAmount(gauge, 'setDepositFee', aboveMaxFee)).to.be.revertedWith(
           'Fee exceeds allowed maximum'
         );
       });
 
-      it('emits fee update event', async () => {});
+      it('emits deposit fee update event', async () => {
+        const fee = 100;
+        const receipt = await authorizeAndSetFeeAmount(gauge, 'setDepositFee', fee);
+
+        expectEvent.inIndirectReceipt(receipt, gauge.interface, 'DepositFeeChanged', {
+          new_deposit_fee: fee,
+        });
+      });
     });
   });
 
@@ -149,15 +163,9 @@ describe('LiquidityGaugeV5', () => {
     });
 
     context('when caller is authorized', () => {
-      sharedBeforeEach('authorize caller', async () => {
-        const setWithdrawFeeAction = await actionId(vault.authorizerAdaptor, 'setWithdrawFee', gauge.interface);
-        await vault.grantPermissionsGlobally([setWithdrawFeeAction], admin);
-      });
-
       it('sets the withdraw fee', async () => {
         const fee = 100;
-        const calldata = gauge.interface.encodeFunctionData('setWithdrawFee', [fee]);
-        await adaptorEntrypoint.connect(admin).performAction(gauge.address, calldata);
+        await authorizeAndSetFeeAmount(gauge, 'setWithdrawFee', fee);
 
         expect(await gauge.getWithdrawFee()).to.equal(fee);
       });
@@ -165,39 +173,63 @@ describe('LiquidityGaugeV5', () => {
       it('can not be set above max cap', async () => {
         const maxWithdraw = (await gauge.getMaxWithdrawFee()).toNumber();
         const fee = maxWithdraw + 1;
-        const calldata = gauge.interface.encodeFunctionData('setWithdrawFee', [fee]);
 
-        await expect(adaptorEntrypoint.connect(admin).performAction(gauge.address, calldata)).to.be.revertedWith(
+        await expect(authorizeAndSetFeeAmount(gauge, 'setWithdrawFee', fee)).to.be.revertedWith(
           'Fee exceeds allowed maximum'
         );
       });
 
-      it('emits fee update event', async () => {});
+      it('emits withdraw fee update event', async () => {
+        const fee = 100;
+        const receipt = await authorizeAndSetFeeAmount(gauge, 'setWithdrawFee', fee);
+
+        expectEvent.inIndirectReceipt(receipt, gauge.interface, 'WithdrawFeeChanged', {
+          new_withdraw_fee: fee,
+        });
+      });
     });
   });
 
   describe('user deposit', () => {
     let gauge: Contract;
-    const amount = fp(100);
 
     sharedBeforeEach('create gauge', async () => {
       gauge = await deployGauge();
-      await doUserDeposit(gauge, amount);
     });
 
     context('when deposit fee is not set', () => {
       it('does not takes a deposit fee', async () => {
         // sanity check
         expect(await gauge.getDepositFee()).to.equal(0);
+
+        const amount = fp(100);
+        await doUserDeposit(gauge, amount);
+        expect(await gauge.balanceOf(other.address)).to.equal(amount);
       });
     });
 
     context('when deposit fee is set', () => {
-      it('takes the current deposit fee', async () => {});
+      sharedBeforeEach('create gauge', async () => {
+        gauge = await deployGauge();
+      });
+
+      it('takes the current deposit fee', async () => {
+        // await giveFunctionPermissions(gauge, 'setDepositFee');
+        // const depositFee = 500; // 5%
+        // await gauge.setDepositFee(depositFee);
+        // const amount = fp(100);
+        // await doUserDeposit(gauge, amount);
+        // const expectedBalanceAfterFees = amount.mul(depositFee).div(10000);
+        // expect(await gauge.balanceOf(other.address)).to.equal(expectedBalanceAfterFees);
+      });
 
       it('correctly credits user lp token balance', async () => {});
 
       it('updates pending accumulated protocol fees', async () => {});
+    });
+
+    context('when gauge is killed', () => {
+      it('does not takes a deposit fee', async () => {});
     });
   });
 

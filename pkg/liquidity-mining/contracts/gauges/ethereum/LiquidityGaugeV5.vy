@@ -437,7 +437,7 @@ def deposit(_value: uint256, _addr: address = msg.sender, _claim_rewards: bool =
 
         # do check to update amount in before updating user and total supplies
         final_value: uint256 = _value
-        if self._deposit_fee > 0:
+        if self._deposit_fee > 0 and self.is_killed == False:
             fee_amount: uint256 = (final_value * self._deposit_fee) / FEE_DENOMINATOR
             final_value = final_value - fee_amount
             self._accumulated_fees += fee_amount
