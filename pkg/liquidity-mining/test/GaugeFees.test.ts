@@ -25,7 +25,7 @@ describe('LiquidityGaugeV5', () => {
     [, admin, other] = await ethers.getSigners();
   });
 
-  sharedBeforeEach('deploy authorizer', async () => {
+  sharedBeforeEach('create gauge', async () => {
     vault = await Vault.create({ admin });
     const adaptor = vault.authorizerAdaptor;
     adaptorEntrypoint = vault.authorizerAdaptorEntrypoint;
@@ -49,74 +49,102 @@ describe('LiquidityGaugeV5', () => {
     gaugeImplementation = await deploy('LiquidityGaugeV5', {
       args: [balMinter.address, veDelegation.address, adaptor.address],
     });
-
     gaugeFactory = await deploy('MockLiquidityGaugeFactory', { args: [gaugeImplementation.address] });
 
     await gaugeController.add_type('Ethereum', 0);
-  });
-
-  sharedBeforeEach('set up permissions', async () => {
-    const setDepositFeeAction = await actionId(adaptorEntrypoint, 'setDepositFee', gaugeImplementation.interface);
-    await vault.grantPermissionsGlobally([setDepositFeeAction], gaugeImplementation);
-
-    const setWithdrawFeeAction = await actionId(adaptorEntrypoint, 'setWithdrawFee', gaugeImplementation.interface);
-    await vault.grantPermissionsGlobally([setWithdrawFeeAction], gaugeImplementation);
-  });
-
-  describe('user deposit', () => {
-    context('when deposit fee is set', () => {
-      it('takes the deposit fee', async () => {
-        // await expect(
-        //   gaugeAdder.connect(other).addGaugeFactory(gaugeFactory.address, GaugeType.Ethereum)
-        // ).to.be.revertedWith('SENDER_NOT_ALLOWED');
-      });
-    });
-
-    context('when deposit fee is not set', () => {
-      it('does not takes a deposit fee', async () => {
-        // await expect(
-        //   gaugeAdder.connect(other).addGaugeFactory(gaugeFactory.address, GaugeType.Ethereum)
-        // ).to.be.revertedWith('SENDER_NOT_ALLOWED');
-      });
-    });
-  });
-
-  describe('user withdraw', () => {
-    context('when withdraw fee is set', () => {
-      it('takes the correct withdraw fee', async () => {
-        // await expect(
-        //   gaugeAdder.connect(other).addGaugeFactory(gaugeFactory.address, GaugeType.Ethereum)
-        // ).to.be.revertedWith('SENDER_NOT_ALLOWED');
-      });
-    });
-
-    context('when withdraw fee is not set', () => {
-      it('does not takes a withdraw fee', async () => {
-        // await expect(
-        //   gaugeAdder.connect(other).addGaugeFactory(gaugeFactory.address, GaugeType.Ethereum)
-        // ).to.be.revertedWith('SENDER_NOT_ALLOWED');
-      });
-    });
+    await gaugeController.add_gauge(gaugeImplementation.address, 0);
   });
 
   describe('setting deposit fee', () => {
+    it('starts at zero', async () => {
+      expect(await gaugeImplementation.getDepositFee()).to.equal(0);
+    });
+
     context('when caller is not authorized', () => {
       it('reverts', async () => {
-        //  await expect(gaugeAdder.connect(other).addEthereumGauge(gauge)).to.be.revertedWith('SENDER_NOT_ALLOWED');
+        await expect(gaugeImplementation.connect(other).setDepositFee(0)).to.be.revertedWith('Unauthorized');
       });
     });
 
     context('when caller is authorized', () => {
       sharedBeforeEach('authorize caller', async () => {
-        // const action = await actionId(gaugeAdder, 'addEthereumGauge');
-        // await vault.grantPermissionsGlobally([action], admin);
+        const setDepositFeeAction = await actionId(
+          vault.authorizerAdaptor,
+          'setDepositFee',
+          gaugeImplementation.interface
+        );
+
+        await vault.grantPermissionsGlobally([setDepositFeeAction], admin);
       });
 
-      it('sets the deposit fee', async () => {});
+      it('sets the deposit fee', async () => {
+        const fee = 100;
+        const calldata = gaugeImplementation.interface.encodeFunctionData('setDepositFee', [fee]);
+        await adaptorEntrypoint.connect(admin).performAction(gaugeImplementation.address, calldata);
+        // await gaugeImplementation.connect(admin).setDepositFee(fee);
+        expect(await gaugeImplementation.getDepositFee()).to.equal(fee);
+      });
+
+      it('can not be set above max cap', async () => {});
     });
   });
 
   describe('setting withdraw fee', () => {
+    it('starts at zero', async () => {
+      expect(await gaugeImplementation.getWithdrawFee()).to.equal(0);
+    });
+
+    context('when caller is not authorized', () => {
+      it('reverts', async () => {
+        await expect(gaugeImplementation.connect(other).setWithdrawFee(0)).to.be.revertedWith('Unauthorized');
+      });
+    });
+
+    context('when caller is authorized', () => {
+      sharedBeforeEach('authorize caller', async () => {
+        const setWithdrawFeeAction = await actionId(adaptorEntrypoint, 'setWithdrawFee', gaugeImplementation.interface);
+        await vault.grantPermissionsGlobally([setWithdrawFeeAction], gaugeImplementation);
+      });
+
+      it('sets the withdraw fee', async () => {});
+
+      it('can not be set above max cap', async () => {});
+    });
+  });
+
+  describe('user deposit', () => {
+    context('when deposit fee is not set', () => {
+      it('does not takes a deposit fee', async () => {});
+
+      it('sets the users correctly credits user lp token balance', async () => {});
+    });
+
+    context('when deposit fee is set', () => {
+      it('takes the current deposit fee', async () => {});
+
+      it('sets the users correctly credits user lp token balance', async () => {});
+
+      it('updates pending accumulated protocol fees', async () => {});
+    });
+  });
+
+  describe('user withdraw', () => {
+    context('when withdraw fee is not set', () => {
+      it('does not takes a withdraw fee', async () => {});
+
+      it('gives the user the correct lp token amount', async () => {});
+    });
+
+    context('when withdraw fee is set', () => {
+      it('takes the current withdraw fee', async () => {});
+
+      it('gives the user the correct lp token amount', async () => {});
+
+      it('updates pending accumulated protocol fees', async () => {});
+    });
+  });
+
+  describe('withdrawing accumulated fees', () => {
     context('when caller is not authorized', () => {
       it('reverts', async () => {
         // await expect(gaugeAdder.connect(other).addEthereumGauge(gauge)).to.be.revertedWith('SENDER_NOT_ALLOWED');
@@ -129,7 +157,11 @@ describe('LiquidityGaugeV5', () => {
         // await vault.grantPermissionsGlobally([action], admin);
       });
 
-      it('sets the withdraw fee', async () => {});
+      it('transfers pending accumulated fees to the protocol fee collector', async () => {
+        // there is a withdrawCollectedFees on the Vault class instance for this
+      });
+
+      it('sets pending accumulated fees to zero', async () => {});
     });
   });
 });
