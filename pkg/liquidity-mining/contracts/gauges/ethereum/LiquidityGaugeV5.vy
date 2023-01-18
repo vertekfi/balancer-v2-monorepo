@@ -118,10 +118,10 @@ VEBOOST_PROXY: immutable(address)
 
 MAX_RELATIVE_WEIGHT_CAP: constant(uint256) = 10 ** 18
 
-
-MAX_DEPOSIT_FEE: constant(uint256) = 1000
-MAX_WITHDRAW_FEE: constant(uint256) = 1000
-FEE_DENOMINATOR: constant(uint256) = 10000
+# lesser precision in favor of users
+MAX_DEPOSIT_FEE: constant(uint256) = 1000000 # 10%
+MAX_WITHDRAW_FEE: constant(uint256) = 1000000 # 10%
+FEE_DENOMINATOR: constant(uint256) = 10000000
 
 _deposit_fee: uint256
 _withdraw_fee: uint256
@@ -361,31 +361,42 @@ def _checkpoint_rewards(_user: address, _total_supply: uint256, _claim: bool, _r
 
 
 @internal
-def _update_liquidity_limit(addr: address, l: uint256, L: uint256):
+def _update_liquidity_limit(addr: address, _user_liquidity_amount: uint256, _total_liquidity: uint256):
     """
     @notice Calculate limits which depend on the amount of BPT token per-user.
             Effectively it calculates working balances to apply amplification
             of BAL production by BPT
     @param addr User address
-    @param l User's amount of liquidity (LP tokens)
-    @param L Total amount of liquidity (LP tokens)
+    @param _user_liquidity_amount User's amount of liquidity (LP tokens)
+    @param _total_liquidity Total amount of liquidity (LP tokens)
     """
     # To be called after totalSupply is updated
-    voting_balance: uint256 = VotingEscrowBoost(VEBOOST_PROXY).adjusted_balance_of(addr)
-    voting_total: uint256 = ERC20(VOTING_ESCROW).totalSupply()
+    user_voting_balance: uint256 = VotingEscrowBoost(VEBOOST_PROXY).adjusted_balance_of(addr)
+    voting_total_supply: uint256 = ERC20(VOTING_ESCROW).totalSupply()
 
-    # Uses 40% of the liquidity value
-    lim: uint256 = l * TOKENLESS_PRODUCTION / 100
-    if voting_total > 0:
-        lim += L * voting_balance / voting_total * (100 - TOKENLESS_PRODUCTION) / 100
+    # Uses 40% of the liquidity value as a starting point
+    user_limit: uint256 = _user_liquidity_amount * TOKENLESS_PRODUCTION / 100
 
-    lim = min(l, lim)
-    old_bal: uint256 = self.working_balances[addr]
-    self.working_balances[addr] = lim
-    _working_supply: uint256 = self.working_supply + lim - old_bal
+    # If user has a VE balance then factor that in to create a "boost"
+    # to the credited liquidity amount provided by the user (their "working supply")
+    # 40% of user deposit + ((_total_liquidity * user_voting_balance) / voting_total_supply) * 0.6
+    if voting_total_supply > 0:
+        user_limit += _total_liquidity * user_voting_balance / voting_total_supply * (100 - TOKENLESS_PRODUCTION) / 100
+
+    # Bounds the boost factor to 2.5x at most
+    # 40% used as base, (100 - TOKENLESS_PRODUCTION) / 100 = 60%
+    # 60% is then the max boosted % a user can be credited for
+    # Arrive at 2.5x through:
+    # 40 x (2) = 80 -> 20 remaining to 100% -> 20 is half (0.5) of 40 -> 2.5 x 40 -> 100%
+    user_limit = min(_user_liquidity_amount, user_limit)
+    user_current_working_balanace: uint256 = self.working_balances[addr]
+
+    # Update working supply for both the user and overall gauge total
+    _working_supply: uint256 = self.working_supply + user_limit - user_current_working_balanace
+    self.working_balances[addr] = user_limit
     self.working_supply = _working_supply
 
-    log UpdateLiquidityLimit(addr, l, L, lim, _working_supply)
+    log UpdateLiquidityLimit(addr, _user_liquidity_amount, _total_liquidity, user_limit, _working_supply)
 
 
 @internal

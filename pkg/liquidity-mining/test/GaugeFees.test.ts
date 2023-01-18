@@ -1,7 +1,8 @@
 import { ethers } from 'hardhat';
-import { BigNumber, Contract, ContractReceipt, ContractTransaction } from 'ethers';
+import { BigNumber, Contract, ContractReceipt } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 
+import { expectEqualWithError } from '@balancer-labs/v2-helpers/src/test/relativeError';
 import * as expectEvent from '@balancer-labs/v2-helpers/src/test/expectEvent';
 import { deploy, deployedAt } from '@balancer-labs/v2-helpers/src/contract';
 import Vault from '@balancer-labs/v2-helpers/src/models/vault/Vault';
@@ -10,6 +11,8 @@ import { actionId } from '@balancer-labs/v2-helpers/src/models/misc/actions';
 import { sharedBeforeEach } from '@balancer-labs/v2-common/sharedBeforeEach';
 import { fp } from '@balancer-labs/v2-helpers/src/numbers';
 import { formatEther } from 'ethers/lib/utils';
+
+const FEE_DENOMINATOR = 10000000;
 
 describe('LiquidityGaugeV5', () => {
   let vault: Vault;
@@ -65,26 +68,18 @@ describe('LiquidityGaugeV5', () => {
     // cap doesn't matter for this
     const tx = await gaugeFactory.create(lpToken.address, BigNumber.from(0));
     const event = expectEvent.inReceipt(await tx.wait(), 'GaugeCreated');
-
     const gauge = await deployedAt('LiquidityGaugeV5', event.args.gauge);
-
     // Throw it on mock controller while we're here
     await gaugeController.add_gauge(gauge.address, 0);
 
     return gauge;
   }
 
-  async function doUserDeposit(gauge: Contract, amount: BigNumber) {
+  async function doOtherUserDeposit(gauge: Contract, amount: BigNumber) {
     // Give user tokens to deposit
     await lpToken.mint(other.address, amount);
     await lpToken.connect(other).approve(gauge.address, amount);
-
     await gauge.connect(other)['deposit(uint256)'](amount);
-  }
-
-  async function giveFunctionPermissions(gauge: Contract, functionName: string) {
-    const action = await actionId(vault.authorizerAdaptor, functionName, gauge.interface);
-    await vault.grantPermissionsGlobally([action], admin);
   }
 
   async function authorizeAndSetFeeAmount(
@@ -203,7 +198,7 @@ describe('LiquidityGaugeV5', () => {
         expect(await gauge.getDepositFee()).to.equal(0);
 
         const amount = fp(100);
-        await doUserDeposit(gauge, amount);
+        await doOtherUserDeposit(gauge, amount);
         expect(await gauge.balanceOf(other.address)).to.equal(amount);
       });
     });
@@ -214,13 +209,69 @@ describe('LiquidityGaugeV5', () => {
       });
 
       it('takes the current deposit fee', async () => {
-        // await giveFunctionPermissions(gauge, 'setDepositFee');
-        // const depositFee = 500; // 5%
-        // await gauge.setDepositFee(depositFee);
-        // const amount = fp(100);
-        // await doUserDeposit(gauge, amount);
-        // const expectedBalanceAfterFees = amount.mul(depositFee).div(10000);
-        // expect(await gauge.balanceOf(other.address)).to.equal(expectedBalanceAfterFees);
+        const depositFee = 500000; // 5%
+        await authorizeAndSetFeeAmount(gauge, 'setDepositFee', depositFee);
+
+        const userDepositAmount = fp(100);
+        await doOtherUserDeposit(gauge, userDepositAmount);
+
+        // 5% of the 100 deposit should have be taken from user balance
+        // before user balance state being set by the gauge
+        const feeDeductionAmount = userDepositAmount.mul(depositFee).div(FEE_DENOMINATOR);
+        const expectedBalanceAfterFees = userDepositAmount.sub(feeDeductionAmount);
+        const userActualDepositBalance = await gauge.balanceOf(other.address);
+
+        expect(userActualDepositBalance).to.equal(expectedBalanceAfterFees);
+      });
+
+      it('correctly updates gauge total supply', async () => {
+        // // sanity check
+        // expect(await gauge.getDepositFee()).to.equal(0);
+
+        // regular deposit with no fees
+        const userDepositAmount = fp(10);
+        await doOtherUserDeposit(gauge, userDepositAmount);
+        expect(await gauge.totalSupply()).to.equal(userDepositAmount);
+
+        // set fee before next deposit
+        const depositFee = 100000; // 1%
+        await authorizeAndSetFeeAmount(gauge, 'setDepositFee', depositFee);
+
+        // deposit again after fee is set
+        const userAdditionalDepositAmount = fp(20);
+        await doOtherUserDeposit(gauge, userAdditionalDepositAmount);
+
+        // assert expected total supply
+        const userTotalIn = userDepositAmount.add(userAdditionalDepositAmount);
+        const actualTotalSupply = await gauge.totalSupply();
+        const userBalance = await gauge.balanceOf(other.address);
+        const pendingFees = await gauge.getAccumulatedFees();
+
+        // These should line up, as totaly supply is directly tied to amounts deposited (accounting for fees)
+        expect(actualTotalSupply).to.equal(userBalance);
+        expect(actualTotalSupply.add(pendingFees)).to.equal(userTotalIn);
+      });
+
+      it('updates user balance over multiple deposits and fee updates', async () => {
+        // // for user and gauge since both are effect in the same way
+        // // regular deposit with no fees
+        // const userDepositAmount = fp(10);
+        // await doOtherUserDeposit(gauge, userDepositAmount);
+        // expect(await gauge.balanceOf(other.address)).to.equal(userDepositAmount);
+        // expect(await gauge.totalSupply()).to.equal(userDepositAmount);
+        // // set fee before next deposit
+        // const depositFee = 100; // 1%
+        // await authorizeAndSetFeeAmount(gauge, 'setDepositFee', depositFee);
+        // // deposit again after fee is set
+        // const userAdditionalDepositAmount = fp(20);
+        // await doOtherUserDeposit(gauge, userAdditionalDepositAmount);
+        // // assert expected total supply
+        // const expectedFeeDeductionAmount = userDepositAmount.mul(depositFee).div(FEE_DENOMINATOR);
+        // const userCurrentTotalIn = userDepositAmount.add(userAdditionalDepositAmount);
+        // const userCurrentTotalInAfterFees = userCurrentTotalIn.sub(expectedFeeDeductionAmount);
+        // const actualUserBalance = await gauge.balanceOf(other.address);
+        // expectEqualWithError(actualUserBalance, userCurrentTotalInAfterFees);
+        // expect(await gauge.balanceOf(other.address)).to.equal(userCurrentTotalInAfterFees);
       });
 
       it('correctly credits user lp token balance', async () => {});
