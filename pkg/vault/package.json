@@ -60,6 +60,7 @@
     "nodemon": "^2.0.20",
     "prettier": "^2.7.1",
     "prettier-plugin-solidity": "v1.0.0-alpha.59",
+    "rimraf": "^4.1.1",
     "solhint": "^3.2.0",
     "solhint-plugin-prettier": "^0.0.4",
     "ts-node": "^10.9.1",
