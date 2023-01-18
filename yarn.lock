@@ -222,6 +222,7 @@ __metadata:
     nodemon: ^2.0.20
     prettier: ^2.7.1
     prettier-plugin-solidity: v1.0.0-alpha.59
+    rimraf: ^4.1.1
     solhint: ^3.2.0
     solhint-plugin-prettier: ^0.0.4
     ts-node: ^10.9.1
@@ -282,6 +283,7 @@ __metadata:
     nodemon: ^2.0.20
     prettier: ^2.7.1
     prettier-plugin-solidity: v1.0.0-alpha.59
+    rimraf: ^4.1.1
     solhint: ^3.2.0
     solhint-plugin-prettier: ^0.0.4
     ts-node: ^10.9.1
@@ -319,6 +321,7 @@ __metadata:
     nodemon: ^2.0.20
     prettier: ^2.7.1
     prettier-plugin-solidity: v1.0.0-alpha.59
+    rimraf: ^4.1.1
     solhint: ^3.2.0
     solhint-plugin-prettier: ^0.0.4
     ts-node: ^10.9.1
@@ -367,6 +370,7 @@ __metadata:
     nodemon: ^2.0.20
     prettier: ^2.7.1
     prettier-plugin-solidity: v1.0.0-alpha.59
+    rimraf: ^4.1.1
     solhint: ^3.2.0
     solhint-plugin-prettier: ^0.0.4
     ts-node: ^10.9.1
@@ -409,6 +413,7 @@ __metadata:
     nodemon: ^2.0.20
     prettier: ^2.7.1
     prettier-plugin-solidity: v1.0.0-alpha.59
+    rimraf: ^4.1.1
     solhint: ^3.2.0
     solhint-plugin-prettier: ^0.0.4
     ts-node: ^10.9.1
@@ -452,6 +457,7 @@ __metadata:
     nodemon: ^2.0.20
     prettier: ^2.7.1
     prettier-plugin-solidity: v1.0.0-alpha.59
+    rimraf: ^4.1.1
     solhint: ^3.2.0
     solhint-plugin-prettier: ^0.0.4
     ts-node: ^10.9.1
@@ -495,6 +501,7 @@ __metadata:
     nodemon: ^2.0.20
     prettier: ^2.7.1
     prettier-plugin-solidity: v1.0.0-alpha.59
+    rimraf: ^4.1.1
     solhint: ^3.2.0
     solhint-plugin-prettier: ^0.0.4
     ts-node: ^10.9.1
@@ -536,6 +543,7 @@ __metadata:
     nodemon: ^2.0.20
     prettier: ^2.7.1
     prettier-plugin-solidity: v1.0.0-alpha.59
+    rimraf: ^4.1.1
     solhint: ^3.2.0
     solhint-plugin-prettier: ^0.0.4
     ts-node: ^10.9.1
@@ -575,6 +583,7 @@ __metadata:
     nodemon: ^2.0.20
     prettier: ^2.7.1
     prettier-plugin-solidity: v1.0.0-alpha.59
+    rimraf: ^4.1.1
     solhint: ^3.2.0
     solhint-plugin-prettier: ^0.0.4
     ts-node: ^10.9.1
@@ -617,6 +626,7 @@ __metadata:
     nodemon: ^2.0.20
     prettier: ^2.7.1
     prettier-plugin-solidity: v1.0.0-alpha.59
+    rimraf: ^4.1.1
     solhint: ^3.2.0
     solhint-plugin-prettier: ^0.0.4
     ts-node: ^10.9.1
@@ -11843,6 +11853,15 @@ resolve@^1.22.1:
   bin:
     rimraf: bin.js
   checksum: f0de3e445581e64a8a077af476cc30708e659f5779ec2ca2a161556d0792aa318a685923798ae22055b4ecd02b9aff444ef619578f7af53cf8e0e248031e3dee
+  languageName: node
+  linkType: hard
+
+"rimraf@npm:^4.1.1":
+  version: 4.1.1
+  resolution: "rimraf@npm:4.1.1"
+  bin:
+    rimraf: dist/cjs/src/bin.js
+  checksum: c94fe25c9122340fb0a5c32ac0d550b5e63e5b9f2af7a8bf4ae738ee56e3f6837eae382bada2a352fa7caa92428e03c4c353d2ef08830a229b510eabc67b0aea
   languageName: node
   linkType: hard
 
