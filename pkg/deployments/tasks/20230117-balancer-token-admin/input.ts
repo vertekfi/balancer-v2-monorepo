@@ -9,7 +9,7 @@ export type TokenAdminDeployment = {
 };
 
 export default {
-  Vault: new Task('20221229-vault', TaskMode.READ_ONLY),
-  GovernanceToken: new Task('20230111-governance-token', TaskMode.READ_ONLY),
+  Vault: new Task('20230117-vault', TaskMode.READ_ONLY),
+  GovernanceToken: new Task('20230117-governance-token', TaskMode.READ_ONLY),
   initialMintAllowance: fp(1250000),
 };
