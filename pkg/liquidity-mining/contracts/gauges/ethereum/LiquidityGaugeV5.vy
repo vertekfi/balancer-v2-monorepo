@@ -939,9 +939,7 @@ def getMaxRelativeWeightCap() -> uint256:
 @external
 def setDepositFee(_fee: uint256):
     """
-    @notice Sets a new deposit fee for the gauge.
-            The value shall be normalized to 1e18, and not greater than MAX_DEPOSIT_FEE.
-    @param New gauge deposit fee.
+    @notice Sets a new deposit fee for the gauge. The value shall be normalized to 1e18, and not greater than MAX_DEPOSIT_FEE.
     """
     assert msg.sender == AUTHORIZER_ADAPTOR, "Unauthorized" 
     assert _fee <= MAX_DEPOSIT_FEE, "Fee exceeds allowed maximum"
@@ -952,9 +950,7 @@ def setDepositFee(_fee: uint256):
 @external
 def setWithdrawFee(_fee: uint256):
     """
-    @notice Sets a new withdraw for the gauge.
-            The value shall be normalized to 1e18, and not greater than MAX_WITHDRAW_FEE.
-    @param New gauge withdraw fee.
+    @notice Sets a new withdraw for the gauge. The value shall be normalized to 1e18, and not greater than MAX_WITHDRAW_FEE.
     """
     assert msg.sender == AUTHORIZER_ADAPTOR, "Unauthorized" 
     assert _fee <= MAX_WITHDRAW_FEE, "Fee exceeds allowed maximum"
