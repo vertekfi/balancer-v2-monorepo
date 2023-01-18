@@ -33,8 +33,17 @@ export function computeDecimalsFromIndex(i: number): number {
 
 export default {
   toVaultDeployment(params: RawVaultDeployment): VaultDeployment {
-    let { mocked, admin, pauseWindowDuration, bufferPeriodDuration, rootTransferDelay, maxYieldValue, maxAUMValue } =
-      params;
+    let {
+      mocked,
+      admin,
+      pauseWindowDuration,
+      bufferPeriodDuration,
+      rootTransferDelay,
+      maxYieldValue,
+      maxAUMValue,
+      WETH,
+    } = params;
+
     if (!mocked) mocked = false;
     if (!admin) admin = params.from;
     if (!pauseWindowDuration) pauseWindowDuration = 0;
@@ -42,7 +51,8 @@ export default {
     if (!rootTransferDelay) rootTransferDelay = MONTH;
     if (!maxYieldValue) maxYieldValue = FP_100_PCT;
     if (!maxAUMValue) maxAUMValue = FP_100_PCT;
-    if (!params.WETH) throw new Error('WETH not provided');
+    if (!WETH) WETH = ZERO_ADDRESS;
+
     return {
       mocked,
       admin,
@@ -51,7 +61,7 @@ export default {
       rootTransferDelay,
       maxYieldValue,
       maxAUMValue,
-      WETH: params.WETH,
+      WETH,
     };
   },
 

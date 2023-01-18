@@ -434,8 +434,16 @@ def deposit(_value: uint256, _addr: address = msg.sender, _claim_rewards: bool =
         if is_rewards:
             self._checkpoint_rewards(_addr, total_supply, _claim_rewards, ZERO_ADDRESS)
 
-        total_supply += _value
-        new_balance: uint256 = self.balanceOf[_addr] + _value
+        # do check to update amount in before updating user and total supplies
+        final_value: uint256 = _value
+        if self._deposit_fee > 0:
+            fee_amount: uint256 = (final_value * self._deposit_fee) / FEE_DENOMINATOR
+            final_value = final_value - fee_amount
+            self._accumulated_fees += fee_amount
+            log FeeCharged(fee_amount, 0)
+
+        total_supply += final_value
+        new_balance: uint256 = self.balanceOf[_addr] + final_value
         self.balanceOf[_addr] = new_balance
         self.totalSupply = total_supply
 
