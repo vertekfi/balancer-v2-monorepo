@@ -87,6 +87,10 @@ event FeeCharged:
 event FeesWithdraw:
     amount: uint256
 
+event FeeExemptionUpdated:
+    who: address
+    isExempt: bool
+
 struct Reward:
     token: address
     distributor: address
@@ -126,6 +130,7 @@ FEE_DENOMINATOR: constant(uint256) = 10000000
 _deposit_fee: uint256
 _withdraw_fee: uint256
 _accumulated_fees: uint256
+_isFeeExempt: (HashMap[address, bool])
 
 _protocolFeesCollector: immutable(address)
 
@@ -448,7 +453,9 @@ def deposit(_value: uint256, _addr: address = msg.sender, _claim_rewards: bool =
 
         # do check to update amount in before updating user and total supplies
         final_value: uint256 = _value
-        if self._deposit_fee > 0 and self.is_killed == False:
+        should_take_fee: bool = self._deposit_fee > 0 and self._isFeeExempt[_addr] == False and self.is_killed == False
+        
+        if should_take_fee:
             fee_amount: uint256 = (final_value * self._deposit_fee) / FEE_DENOMINATOR
             final_value = final_value - fee_amount
             self._accumulated_fees += fee_amount
@@ -977,6 +984,16 @@ def setWithdrawFee(_fee: uint256):
 
     self._withdraw_fee = _fee
     log WithdrawFeeChanged(_fee)
+
+@external
+def updateFeeExempt(_who: address, _exempt: bool):
+    """
+    @notice Toggles the fee exempt status of an address
+    """
+    assert msg.sender == AUTHORIZER_ADAPTOR, "Unauthorized" 
+
+    self._isFeeExempt[_who] = _exempt
+    log FeeExemptionUpdated(_who, _exempt)
 
 @external
 @pure

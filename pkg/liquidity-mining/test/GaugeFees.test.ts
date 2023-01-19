@@ -82,15 +82,25 @@ describe('LiquidityGaugeV5', () => {
     await gauge.connect(other)['deposit(uint256)'](amount);
   }
 
+  async function authorizeCall(gauge: Contract, functionName: string) {
+    const action = await actionId(vault.authorizerAdaptor, functionName, gauge.interface);
+    await vault.grantPermissionsGlobally([action], admin);
+  }
+
   async function authorizeAndSetFeeAmount(
     gauge: Contract,
     feeSetterFunctionName: string,
     fee: number
   ): Promise<ContractReceipt> {
-    const action = await actionId(vault.authorizerAdaptor, feeSetterFunctionName, gauge.interface);
-    await vault.grantPermissionsGlobally([action], admin);
-
+    await authorizeCall(gauge, feeSetterFunctionName);
     const calldata = gauge.interface.encodeFunctionData(feeSetterFunctionName, [fee]);
+    const tx = await adaptorEntrypoint.connect(admin).performAction(gauge.address, calldata);
+    return await tx.wait();
+  }
+
+  async function updateFeeExemption(gauge: Contract, exempt: boolean) {
+    await authorizeCall(gauge, 'updateFeeExempt');
+    const calldata = gauge.interface.encodeFunctionData('updateFeeExempt', [other.address, exempt]);
     const tx = await adaptorEntrypoint.connect(admin).performAction(gauge.address, calldata);
     return await tx.wait();
   }
@@ -225,9 +235,6 @@ describe('LiquidityGaugeV5', () => {
       });
 
       it('correctly updates gauge total supply', async () => {
-        // // sanity check
-        // expect(await gauge.getDepositFee()).to.equal(0);
-
         // regular deposit with no fees
         const userDepositAmount = fp(10);
         await doOtherUserDeposit(gauge, userDepositAmount);
@@ -252,35 +259,30 @@ describe('LiquidityGaugeV5', () => {
         expect(actualTotalSupply.add(pendingFees)).to.equal(userTotalIn);
       });
 
-      it('updates user balance over multiple deposits and fee updates', async () => {
-        // // for user and gauge since both are effect in the same way
-        // // regular deposit with no fees
-        // const userDepositAmount = fp(10);
-        // await doOtherUserDeposit(gauge, userDepositAmount);
-        // expect(await gauge.balanceOf(other.address)).to.equal(userDepositAmount);
-        // expect(await gauge.totalSupply()).to.equal(userDepositAmount);
-        // // set fee before next deposit
-        // const depositFee = 100; // 1%
-        // await authorizeAndSetFeeAmount(gauge, 'setDepositFee', depositFee);
-        // // deposit again after fee is set
-        // const userAdditionalDepositAmount = fp(20);
-        // await doOtherUserDeposit(gauge, userAdditionalDepositAmount);
-        // // assert expected total supply
-        // const expectedFeeDeductionAmount = userDepositAmount.mul(depositFee).div(FEE_DENOMINATOR);
-        // const userCurrentTotalIn = userDepositAmount.add(userAdditionalDepositAmount);
-        // const userCurrentTotalInAfterFees = userCurrentTotalIn.sub(expectedFeeDeductionAmount);
-        // const actualUserBalance = await gauge.balanceOf(other.address);
-        // expectEqualWithError(actualUserBalance, userCurrentTotalInAfterFees);
-        // expect(await gauge.balanceOf(other.address)).to.equal(userCurrentTotalInAfterFees);
-      });
+      it('updates user balance over multiple deposits and fee updates', async () => {});
 
-      it('correctly credits user lp token balance', async () => {});
+      it('accounts for decimal precision', async () => {});
 
       it('updates pending accumulated protocol fees', async () => {});
-    });
 
-    context('when gauge is killed', () => {
-      it('does not takes a deposit fee', async () => {});
+      context('when account is fee exempt', () => {
+        sharedBeforeEach('authorizing updateFeeExempt', async () => {
+          await authorizeCall(gauge, 'updateFeeExempt');
+        });
+
+        it('does not take a fee', async () => {
+          // Set exempt first
+          await updateFeeExemption(gauge, true);
+
+          // Doesn't matter what fee is, just as long as one is set
+          await authorizeAndSetFeeAmount(gauge, 'setDepositFee', 100);
+
+          // Use should get credited for full deposit amount despite fee being set
+          const amount = fp(100);
+          await doOtherUserDeposit(gauge, amount);
+          expect(await gauge.balanceOf(other.address)).to.equal(amount);
+        });
+      });
     });
   });
 
@@ -305,28 +307,57 @@ describe('LiquidityGaugeV5', () => {
 
       it('gives the user the correct lp token amount', async () => {});
 
+      it('accounts for decimal precision', async () => {});
+
       it('updates pending accumulated protocol fees', async () => {});
+
+      context('when gauge is killed', () => {
+        it('does not take a deposit fee', async () => {});
+      });
+
+      context('when account is fee exempt', () => {
+        sharedBeforeEach('authorizing updateFeeExempt', async () => {
+          await authorizeCall(gauge, 'updateFeeExempt');
+        });
+
+        it('does not take a fee', async () => {});
+      });
     });
   });
 
   describe('withdrawing accumulated fees', () => {
     context('when caller is not authorized', () => {
-      it('reverts', async () => {
-        // await expect(gaugeAdder.connect(other).addEthereumGauge(gauge)).to.be.revertedWith('SENDER_NOT_ALLOWED');
-      });
+      it('reverts', async () => {});
     });
 
     context('when caller is authorized', () => {
-      sharedBeforeEach('authorize caller', async () => {
-        // const action = await actionId(gaugeAdder, 'addEthereumGauge');
-        // await vault.grantPermissionsGlobally([action], admin);
-      });
+      sharedBeforeEach('authorize caller', async () => {});
 
-      it('transfers pending accumulated fees to the protocol fees collector', async () => {
-        // there is a withdrawCollectedFees on the Vault class instance for this
-      });
+      it('transfers pending accumulated fees to the protocol fees collector', async () => {});
 
       it('sets pending accumulated fees to zero', async () => {});
+    });
+  });
+
+  describe('fee exemption', () => {
+    describe('setting fee exemptions', () => {
+      context('when caller is not authorized', () => {
+        it('reverts', async () => {});
+      });
+
+      context('when caller is authorized', () => {
+        it('reverts', async () => {});
+      });
+    });
+
+    describe('account actions', () => {
+      context('when address is not fee exempt', () => {
+        it('charges a fee', async () => {});
+      });
+
+      context('when address is fee exempt', () => {
+        it('does dont charge a fee', async () => {});
+      });
     });
   });
 });
