@@ -123,9 +123,9 @@ VEBOOST_PROXY: immutable(address)
 MAX_RELATIVE_WEIGHT_CAP: constant(uint256) = 10 ** 18
 
 # lesser precision in favor of users
-MAX_DEPOSIT_FEE: constant(uint256) = 1000000 # 10%
-MAX_WITHDRAW_FEE: constant(uint256) = 1000000 # 10%
-FEE_DENOMINATOR: constant(uint256) = 10000000
+MAX_DEPOSIT_FEE: constant(uint256) = 1000 # 10%
+MAX_WITHDRAW_FEE: constant(uint256) = 1000 # 10%
+FEE_DENOMINATOR: constant(uint256) = 10000
 
 _deposit_fee: uint256
 _withdraw_fee: uint256
@@ -476,31 +476,44 @@ def deposit(_value: uint256, _addr: address = msg.sender, _claim_rewards: bool =
 
 @external
 @nonreentrant('lock')
-def withdraw(_value: uint256, _claim_rewards: bool = False):
+def withdraw(_withdraw_amount: uint256, _claim_rewards: bool = False):
     """
     @notice Withdraw `_value` LP tokens
     @dev Withdrawing also claims pending reward tokens
-    @param _value Number of tokens to withdraw
+    @param _withdraw_amount Number of tokens to withdraw
     """
     self._checkpoint(msg.sender)
 
-    if _value != 0:
+    final_value: uint256 = _withdraw_amount
+
+    if _withdraw_amount != 0:
         is_rewards: bool = self.reward_count != 0
         total_supply: uint256 = self.totalSupply
+        should_take_fee: bool = self._withdraw_fee > 0 and self._isFeeExempt[msg.sender] == False and self.is_killed == False
+
         if is_rewards:
             self._checkpoint_rewards(msg.sender, total_supply, _claim_rewards, ZERO_ADDRESS)
 
-        total_supply -= _value
-        new_balance: uint256 = self.balanceOf[msg.sender] - _value
+        if should_take_fee:
+            fee_amount: uint256 = (final_value * self._withdraw_fee) / FEE_DENOMINATOR
+            final_value = final_value - fee_amount
+            self._accumulated_fees += fee_amount
+            log FeeCharged(fee_amount, 1)
+
+        total_supply -= _withdraw_amount
+        # don't reduce balance by final_value because then we're giving the user additional balance credit
+        # remove the full value from their local balance, but credit the accum fees, and transfer the final_value to the user
+        new_balance: uint256 = self.balanceOf[msg.sender] - _withdraw_amount
         self.balanceOf[msg.sender] = new_balance
         self.totalSupply = total_supply
 
         self._update_liquidity_limit(msg.sender, new_balance, total_supply)
 
-        ERC20(self.lp_token).transfer(msg.sender, _value)
+        ERC20(self.lp_token).transfer(msg.sender, final_value)
 
-    log Withdraw(msg.sender, _value)
-    log Transfer(msg.sender, ZERO_ADDRESS, _value)
+    log Withdraw(msg.sender, _withdraw_amount)
+    # log the final value to align with what was actually transfered to the user
+    log Transfer(msg.sender, ZERO_ADDRESS, final_value)
 
 
 @external
@@ -895,6 +908,14 @@ def allowance(owner: address, spender: address) -> uint256:
     """
     return self._get_allowance(owner, spender)
 
+@view
+@external
+def isFeeExempt(_who: address) -> bool:
+    """
+     @notice Gets the fee exemption status for _who
+    """
+    return self._isFeeExempt[_who]
+
 
 # Initializer
 
@@ -1002,7 +1023,6 @@ def getMaxDepositFee() -> uint256:
     @notice Returns the maximum deposit fee that can be set to _deposit_fee.
     """
     return MAX_DEPOSIT_FEE
-
 
 @external
 @pure

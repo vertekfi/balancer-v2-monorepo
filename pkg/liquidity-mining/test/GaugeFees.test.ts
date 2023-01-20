@@ -11,8 +11,9 @@ import { actionId } from '@balancer-labs/v2-helpers/src/models/misc/actions';
 import { sharedBeforeEach } from '@balancer-labs/v2-common/sharedBeforeEach';
 import { fp } from '@balancer-labs/v2-helpers/src/numbers';
 import { formatEther } from 'ethers/lib/utils';
+import { ZERO_ADDRESS } from '@balancer-labs/v2-helpers/src/constants';
 
-const FEE_DENOMINATOR = 10000000;
+const FEE_DENOMINATOR = 10000;
 
 describe('LiquidityGaugeV5', () => {
   let vault: Vault;
@@ -75,11 +76,12 @@ describe('LiquidityGaugeV5', () => {
     return gauge;
   }
 
-  async function doOtherUserDeposit(gauge: Contract, amount: BigNumber) {
+  async function doOtherUserDeposit(gauge: Contract, amount: BigNumber): Promise<ContractReceipt> {
     // Give user tokens to deposit
     await lpToken.mint(other.address, amount);
     await lpToken.connect(other).approve(gauge.address, amount);
-    await gauge.connect(other)['deposit(uint256)'](amount);
+    const tx = await gauge.connect(other)['deposit(uint256)'](amount);
+    return tx.wait();
   }
 
   async function authorizeCall(gauge: Contract, functionName: string) {
@@ -95,14 +97,14 @@ describe('LiquidityGaugeV5', () => {
     await authorizeCall(gauge, feeSetterFunctionName);
     const calldata = gauge.interface.encodeFunctionData(feeSetterFunctionName, [fee]);
     const tx = await adaptorEntrypoint.connect(admin).performAction(gauge.address, calldata);
-    return await tx.wait();
+    return tx.wait();
   }
 
-  async function updateFeeExemption(gauge: Contract, exempt: boolean) {
+  async function updateOtherUserFeeExemption(gauge: Contract, exempt: boolean) {
     await authorizeCall(gauge, 'updateFeeExempt');
     const calldata = gauge.interface.encodeFunctionData('updateFeeExempt', [other.address, exempt]);
     const tx = await adaptorEntrypoint.connect(admin).performAction(gauge.address, calldata);
-    return await tx.wait();
+    return tx.wait();
   }
 
   describe('setting deposit fee', () => {
@@ -195,6 +197,30 @@ describe('LiquidityGaugeV5', () => {
     });
   });
 
+  describe('fee exemption', () => {
+    let gauge: Contract;
+
+    sharedBeforeEach('create gauge', async () => {
+      gauge = await deployGauge();
+    });
+
+    describe('setting fee exemptions', () => {
+      context('when caller is not authorized', () => {
+        it('reverts', async () => {
+          await expect(gauge.connect(other).updateFeeExempt(ZERO_ADDRESS, true)).to.be.revertedWith('Unauthorized');
+        });
+      });
+
+      context('when caller is authorized', () => {
+        it('updates fee exempt status', async () => {
+          expect(await gauge.isFeeExempt(other.address)).to.be.false;
+          await updateOtherUserFeeExemption(gauge, true);
+          expect(await gauge.isFeeExempt(other.address)).to.be.true;
+        });
+      });
+    });
+  });
+
   describe('user deposit', () => {
     let gauge: Contract;
 
@@ -219,7 +245,7 @@ describe('LiquidityGaugeV5', () => {
       });
 
       it('takes the current deposit fee', async () => {
-        const depositFee = 500000; // 5%
+        const depositFee = 500; // 5%
         await authorizeAndSetFeeAmount(gauge, 'setDepositFee', depositFee);
 
         const userDepositAmount = fp(100);
@@ -234,6 +260,21 @@ describe('LiquidityGaugeV5', () => {
         expect(userActualDepositBalance).to.equal(expectedBalanceAfterFees);
       });
 
+      it('emits events with proper argument values', async () => {
+        const depositFee = 500; // 5%
+        await authorizeAndSetFeeAmount(gauge, 'setDepositFee', depositFee);
+
+        const userDepositAmount = fp(100);
+        const receipt = await doOtherUserDeposit(gauge, userDepositAmount);
+
+        const feeDeductionAmount = userDepositAmount.mul(depositFee).div(FEE_DENOMINATOR);
+
+        expectEvent.inIndirectReceipt(receipt, gauge.interface, 'FeeCharged', {
+          fee_amount: feeDeductionAmount,
+          fee_type: 0,
+        });
+      });
+
       it('correctly updates gauge total supply', async () => {
         // regular deposit with no fees
         const userDepositAmount = fp(10);
@@ -241,7 +282,7 @@ describe('LiquidityGaugeV5', () => {
         expect(await gauge.totalSupply()).to.equal(userDepositAmount);
 
         // set fee before next deposit
-        const depositFee = 100000; // 1%
+        const depositFee = 1000; // 10%
         await authorizeAndSetFeeAmount(gauge, 'setDepositFee', depositFee);
 
         // deposit again after fee is set
@@ -249,21 +290,27 @@ describe('LiquidityGaugeV5', () => {
         await doOtherUserDeposit(gauge, userAdditionalDepositAmount);
 
         // assert expected total supply
-        const userTotalIn = userDepositAmount.add(userAdditionalDepositAmount);
         const actualTotalSupply = await gauge.totalSupply();
         const userBalance = await gauge.balanceOf(other.address);
-        const pendingFees = await gauge.getAccumulatedFees();
 
         // These should line up, as totaly supply is directly tied to amounts deposited (accounting for fees)
         expect(actualTotalSupply).to.equal(userBalance);
-        expect(actualTotalSupply.add(pendingFees)).to.equal(userTotalIn);
       });
 
-      it('updates user balance over multiple deposits and fee updates', async () => {});
+      it('updates pending accumulated protocol fees', async () => {
+        const depositFee = 1000; // 10%
+        await authorizeAndSetFeeAmount(gauge, 'setDepositFee', depositFee);
 
-      it('accounts for decimal precision', async () => {});
+        const totalUserDeposits = fp(100);
+        await doOtherUserDeposit(gauge, totalUserDeposits);
 
-      it('updates pending accumulated protocol fees', async () => {});
+        // Total supply should be the difference between user deposits minus any fees
+        // So total supply plus pending fees should be equal to actual total user deposits
+        const actualTotalSupply = await gauge.totalSupply();
+        const pendingFees = await gauge.getAccumulatedFees();
+
+        expect(actualTotalSupply.add(pendingFees)).to.equal(totalUserDeposits);
+      });
 
       context('when account is fee exempt', () => {
         sharedBeforeEach('authorizing updateFeeExempt', async () => {
@@ -272,7 +319,7 @@ describe('LiquidityGaugeV5', () => {
 
         it('does not take a fee', async () => {
           // Set exempt first
-          await updateFeeExemption(gauge, true);
+          await updateOtherUserFeeExemption(gauge, true);
 
           // Doesn't matter what fee is, just as long as one is set
           await authorizeAndSetFeeAmount(gauge, 'setDepositFee', 100);
@@ -281,6 +328,19 @@ describe('LiquidityGaugeV5', () => {
           const amount = fp(100);
           await doOtherUserDeposit(gauge, amount);
           expect(await gauge.balanceOf(other.address)).to.equal(amount);
+        });
+      });
+
+      context('when account is not fee exempt', () => {
+        it('it takes a fee', async () => {
+          const fee = 1000;
+          await authorizeAndSetFeeAmount(gauge, 'setDepositFee', fee);
+
+          const amount = fp(100);
+          await doOtherUserDeposit(gauge, amount);
+          // quick check since we already verified this behavior above
+          const userBalance = await gauge.balanceOf(other.address);
+          expect(userBalance.lt(amount)).to.be.true;
         });
       });
     });
@@ -299,15 +359,63 @@ describe('LiquidityGaugeV5', () => {
         expect(await gauge.getWithdrawFee()).to.equal(0);
       });
 
-      it('gives the user the correct lp token amount', async () => {});
+      it('gives the user the correct lp token amount', async () => {
+        // do normal deposit
+        // regular deposit with no fees
+        const userDepositAmount = fp(10);
+        await doOtherUserDeposit(gauge, userDepositAmount);
+        expect(await lpToken.balanceOf(other.address)).to.equal(0);
+
+        // do withdraw
+        await gauge.connect(other)['withdraw(uint256)'](await gauge.balanceOf(other.address));
+        // amount out should be same as in
+        expect(await lpToken.balanceOf(other.address)).to.equal(userDepositAmount);
+      });
     });
 
     context('when withdraw fee is set', () => {
-      it('takes the current withdraw fee', async () => {});
+      const withdrawFee = 1000;
 
-      it('gives the user the correct lp token amount', async () => {});
+      sharedBeforeEach('create gauge', async () => {
+        await authorizeAndSetFeeAmount(gauge, 'setWithdrawFee', withdrawFee);
+      });
 
-      it('accounts for decimal precision', async () => {});
+      it('takes the current withdraw fee', async () => {
+        const userDepositAmount = fp(10);
+        await doOtherUserDeposit(gauge, userDepositAmount);
+
+        await gauge.connect(other)['withdraw(uint256)'](await gauge.balanceOf(other.address));
+
+        const walletBalance = await lpToken.balanceOf(other.address);
+        const feeAmount = userDepositAmount.mul(withdrawFee).div(FEE_DENOMINATOR);
+        // amount out should be original deposit amount minus fee
+        const expectedWalledBalance = userDepositAmount.sub(feeAmount);
+        expect(walletBalance).to.equal(expectedWalledBalance);
+      });
+
+      it('emits events with proper argument values', async () => {
+        const userDepositAmount = fp(10);
+        await doOtherUserDeposit(gauge, userDepositAmount);
+
+        const tx = await gauge.connect(other)['withdraw(uint256)'](await gauge.balanceOf(other.address));
+        const feeAmount = userDepositAmount.mul(withdrawFee).div(FEE_DENOMINATOR);
+
+        expectEvent.inIndirectReceipt(await tx.wait(), gauge.interface, 'FeeCharged', {
+          fee_amount: feeAmount,
+          fee_type: 1,
+        });
+      });
+
+      it('updates the total supply', async () => {
+        // const userDepositAmount = fp(10);
+        // await doOtherUserDeposit(gauge, userDepositAmount);
+        // await gauge.connect(other)['withdraw(uint256)'](await gauge.balanceOf(other.address));
+        // const walletBalance = await lpToken.balanceOf(other.address);
+        // const feeAmount = userDepositAmount.mul(withdrawFee).div(FEE_DENOMINATOR);
+        // // amount out should deposit amount minus fee
+        // const expectedWalledBalance = userDepositAmount.sub(feeAmount);
+        // expect(walletBalance).to.equal(expectedWalledBalance);
+      });
 
       it('updates pending accumulated protocol fees', async () => {});
 
@@ -336,28 +444,6 @@ describe('LiquidityGaugeV5', () => {
       it('transfers pending accumulated fees to the protocol fees collector', async () => {});
 
       it('sets pending accumulated fees to zero', async () => {});
-    });
-  });
-
-  describe('fee exemption', () => {
-    describe('setting fee exemptions', () => {
-      context('when caller is not authorized', () => {
-        it('reverts', async () => {});
-      });
-
-      context('when caller is authorized', () => {
-        it('reverts', async () => {});
-      });
-    });
-
-    describe('account actions', () => {
-      context('when address is not fee exempt', () => {
-        it('charges a fee', async () => {});
-      });
-
-      context('when address is fee exempt', () => {
-        it('does dont charge a fee', async () => {});
-      });
     });
   });
 });
