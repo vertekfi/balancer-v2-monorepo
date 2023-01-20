@@ -6,6 +6,6 @@ export type GaugeSystemDeployment = {
 };
 
 export default {
-  veAddress: new Task('20230112-voting-escrow', TaskMode.READ_ONLY),
-  AuthorizerAdaptor: new Task('20221229-vault', TaskMode.READ_ONLY),
+  VotingEscrow: new Task('20230120-voting-escrow', TaskMode.READ_ONLY),
+  AuthorizerAdaptor: new Task('20230117-authorizers', TaskMode.READ_ONLY),
 };
