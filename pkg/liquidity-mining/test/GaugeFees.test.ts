@@ -400,27 +400,69 @@ describe('LiquidityGaugeV5', () => {
         const tx = await gauge.connect(other)['withdraw(uint256)'](await gauge.balanceOf(other.address));
         const feeAmount = userDepositAmount.mul(withdrawFee).div(FEE_DENOMINATOR);
 
-        expectEvent.inIndirectReceipt(await tx.wait(), gauge.interface, 'FeeCharged', {
+        const amountTransferedToUser = userDepositAmount.sub(feeAmount);
+        const receipt = await tx.wait();
+
+        expectEvent.inIndirectReceipt(receipt, gauge.interface, 'FeeCharged', {
           fee_amount: feeAmount,
           fee_type: 1,
+        });
+
+        expectEvent.inIndirectReceipt(receipt, gauge.interface, 'Transfer', {
+          _value: amountTransferedToUser,
+        });
+
+        expectEvent.inIndirectReceipt(receipt, gauge.interface, 'Withdraw', {
+          provider: other.address,
+          value: userDepositAmount,
         });
       });
 
       it('updates the total supply', async () => {
-        // const userDepositAmount = fp(10);
-        // await doOtherUserDeposit(gauge, userDepositAmount);
-        // await gauge.connect(other)['withdraw(uint256)'](await gauge.balanceOf(other.address));
-        // const walletBalance = await lpToken.balanceOf(other.address);
-        // const feeAmount = userDepositAmount.mul(withdrawFee).div(FEE_DENOMINATOR);
-        // // amount out should deposit amount minus fee
-        // const expectedWalledBalance = userDepositAmount.sub(feeAmount);
-        // expect(walletBalance).to.equal(expectedWalledBalance);
+        const userDepositAmount = fp(10);
+        await doOtherUserDeposit(gauge, userDepositAmount);
+
+        let totalSupply = await gauge.totalSupply();
+
+        // No fee on deposit
+        expect(totalSupply).to.equal(userDepositAmount);
+
+        // user withdraws with fee set
+        const withdrawAmount = await gauge.balanceOf(other.address);
+        await gauge.connect(other)['withdraw(uint256)'](withdrawAmount);
+
+        // total supply should be zero
+        totalSupply = await gauge.totalSupply();
+        expect(totalSupply).to.equal(0);
       });
 
-      it('updates pending accumulated protocol fees', async () => {});
+      it('updates pending accumulated protocol fees', async () => {
+        await doOtherUserDeposit(gauge, fp(100));
+
+        // Partial withdraw amount to mix it up
+        const withdrawAmount: BigNumber = (await gauge.balanceOf(other.address)).div(2);
+        await gauge.connect(other)['withdraw(uint256)'](withdrawAmount);
+
+        const pendingFees = await gauge.getAccumulatedFees();
+        const expectedFeeAmount = withdrawAmount.mul(withdrawFee).div(FEE_DENOMINATOR);
+
+        expect(pendingFees).to.equal(expectedFeeAmount);
+      });
 
       context('when gauge is killed', () => {
-        it('does not take a deposit fee', async () => {});
+        it('does not take a fee', async () => {
+          const userDepositAmount = fp(10);
+          await doOtherUserDeposit(gauge, userDepositAmount);
+
+          await authorizeCall(gauge, 'killGauge');
+          const calldata = gauge.interface.encodeFunctionData('killGauge');
+          await adaptorEntrypoint.connect(admin).performAction(gauge.address, calldata);
+
+          // withdraw fee is set in sharedBeforeEach
+          await gauge.connect(other)['withdraw(uint256)'](userDepositAmount);
+          // even though fee is set user should still get full balance without a fee
+          expect(await lpToken.balanceOf(other.address)).to.equal(userDepositAmount);
+        });
       });
 
       context('when account is fee exempt', () => {
@@ -428,7 +470,17 @@ describe('LiquidityGaugeV5', () => {
           await authorizeCall(gauge, 'updateFeeExempt');
         });
 
-        it('does not take a fee', async () => {});
+        it('does not take a fee', async () => {
+          // Set user exempt
+          await updateOtherUserFeeExemption(gauge, true);
+
+          const depositAmount = fp(100);
+          await doOtherUserDeposit(gauge, depositAmount);
+          await gauge.connect(other)['withdraw(uint256)'](depositAmount);
+
+          // User should get credited for full withdraw amount despite fee being set
+          expect(await lpToken.balanceOf(other.address)).to.equal(depositAmount);
+        });
       });
     });
   });

@@ -501,7 +501,7 @@ def withdraw(_withdraw_amount: uint256, _claim_rewards: bool = False):
             log FeeCharged(fee_amount, 1)
 
         total_supply -= _withdraw_amount
-        # don't reduce balance by final_value because then we're giving the user additional balance credit
+        # do not reduce balance by final_value because then we are giving the user additional balance credit
         # remove the full value from their local balance, but credit the accum fees, and transfer the final_value to the user
         new_balance: uint256 = self.balanceOf[msg.sender] - _withdraw_amount
         self.balanceOf[msg.sender] = new_balance
