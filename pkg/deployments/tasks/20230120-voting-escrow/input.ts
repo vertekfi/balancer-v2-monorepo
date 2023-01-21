@@ -13,6 +13,6 @@ export default {
     BPT: '', // BPT of the canonical 80-20 BAL-WETH Pool
   },
   goerli: {
-    BPT: '0x0d55eC026cDca38DF6dc03eE1E026422F885dd8B', // BPT of an 80-20 BAL-WETH Pool using test BAL
+    BPT: '0x762b77980Ea2d624CDc5F774352F25C598E469CE', // BPT of an 80-20 BAL-WETH Pool using test BAL
   },
 };

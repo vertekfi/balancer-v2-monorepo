@@ -18,19 +18,25 @@ export default async (task: Task, { force, from }: TaskRunOptions = {}): Promise
 
   const basicAuthorizer = await VaultDeployer._deployBasicAuthorizer(admin);
   await task.save({ MockBasicAuthorizer: basicAuthorizer.address });
+  console.log('MockBasicAuthorizer deployed to: ' + basicAuthorizer.address);
 
   const vault = await VaultDeployer._deployReal(deployment, basicAuthorizer.address);
   await task.save({ Vault: vault.address });
+
+  console.log('Vault deployed to: ' + vault.address);
+
+  // The vault automatically also deploys the protocol fees collector: we must verify it
+  const feeCollectorAddress = await vault.getProtocolFeesCollector();
+  const feeCollectorArgs = [vault.address]; // See ProtocolFeesCollector constructor
+  await task.save({ ProtocolFeesCollector: feeCollectorAddress });
+
+  console.log('ProtocolFeesCollector deployed to: ' + feeCollectorAddress);
+
+  await task.verify('ProtocolFeesCollector', feeCollectorAddress, feeCollectorArgs);
   await task.verify('Vault', vault.address, [
     basicAuthorizer.address,
     input.WETH,
     input.pauseWindowDuration,
     input.bufferPeriodDuration,
   ]);
-
-  // The vault automatically also deploys the protocol fees collector: we must verify it
-  const feeCollectorAddress = await vault.getProtocolFeesCollector();
-  const feeCollectorArgs = [vault.address]; // See ProtocolFeesCollector constructor
-  await task.save({ ProtocolFeesCollector: feeCollectorAddress });
-  await task.verify('ProtocolFeesCollector', feeCollectorAddress, feeCollectorArgs);
 };

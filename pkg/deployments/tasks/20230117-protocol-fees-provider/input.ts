@@ -8,9 +8,8 @@ export type ProtocolFeePercentagesInput = {
   maxAUMValue: BigNumber;
 };
 
-const vaultTask = new Task('20230117-vault', TaskMode.READ_ONLY);
 export default {
-  Vault: vaultTask,
-  maxYieldValue: FP_100_PCT,
-  maxAUMValue: FP_100_PCT,
+  Vault: new Task('20230117-vault', TaskMode.READ_ONLY),
+  maxYieldValue: FP_100_PCT.div(2),
+  maxAUMValue: FP_100_PCT.div(2),
 };
