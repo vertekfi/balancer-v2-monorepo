@@ -131,8 +131,7 @@ _deposit_fee: uint256
 _withdraw_fee: uint256
 _accumulated_fees: uint256
 _isFeeExempt: (HashMap[address, bool])
-
-_protocolFeesCollector: immutable(address)
+PROTOCOL_FEES_COLLECTOR: immutable(address)
 
 # ERC20
 balanceOf: public(HashMap[address, uint256])
@@ -201,7 +200,7 @@ def __init__(minter: address, veBoostProxy: address, authorizerAdaptor: address)
     balTokenAdmin: address = Minter(minter).getBalancerTokenAdmin()
     BAL_TOKEN_ADMIN = balTokenAdmin
     BAL_VAULT = TokenAdmin(balTokenAdmin).getVault()
-    _protocolFeesCollector = Vault(BAL_VAULT).getProtocolFeesCollector()
+    PROTOCOL_FEES_COLLECTOR = Vault(BAL_VAULT).getProtocolFeesCollector()
     AUTHORIZER_ADAPTOR = authorizerAdaptor
     GAUGE_CONTROLLER = gaugeController
     MINTER = minter
@@ -1056,18 +1055,25 @@ def getAccumulatedFees() -> uint256:
     """
     return self._accumulated_fees
 
-# @external
-# @nonreentrant("lock")
-# def withdrawFees():
-#     """
-#     @notice Withdraws accumulated fees to the ProtocolFeesCollector. Fee are not transfered when taken to save users gas.
-#     """
-#     assert msg.sender == AUTHORIZER_ADAPTOR, "Unauthorized" 
-#     
-#     need a transfer interface for the pool token or use the vyper ERC20 interface (Assuming it is the same. Have to look at it)
-#     fee_amount = self._accumulated_fees
-#     self._accumulated_fees = 0
-#     ERC20(self.lp_token).transfer(fee_amount, self._protocol_fees_collector) # require success or something of that nature
-#     
-#     log FeesWithdraw(fee_amount)
+@external
+@view
+def getProtocolFeesCollector() -> address:
+    """
+    @notice Returns the address of the ProtocolFeesCollector.
+    """
+    return PROTOCOL_FEES_COLLECTOR
+
+@external
+@nonreentrant("lock")
+def withdrawFees():
+    """
+    @notice Withdraws accumulated fees to the ProtocolFeesCollector. Fee are not transfered when taken to save users gas.
+    """
+    assert msg.sender == AUTHORIZER_ADAPTOR, "Unauthorized" 
+    
+    fee_amount: uint256 = self._accumulated_fees
+    self._accumulated_fees = 0
+    ERC20(self.lp_token).transfer(PROTOCOL_FEES_COLLECTOR, fee_amount) 
+    
+    log FeesWithdraw(fee_amount)
     
