@@ -30,9 +30,9 @@ class TokensDeployer {
 
     let instance;
     if (symbol !== 'WETH') {
-      instance = await deploy('v2-standalone-utils/TestERC20Token', {
+      instance = await deploy('v2-solidity-utils/ERC20Mock', {
         from: sender,
-        args: [name, symbol, decimals],
+        args: [name, symbol],
       });
     } else {
       instance = await deploy('v2-standalone-utils/TestWETH', {

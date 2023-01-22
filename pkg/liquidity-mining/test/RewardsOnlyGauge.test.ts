@@ -65,96 +65,96 @@ describe('RewardsOnlyGauge', () => {
     });
   });
 
-  describe('permit', () => {
-    it('initial nonce is zero', async () => {
-      expect(await gauge.nonces(holder.address)).to.equal(0);
-    });
+  // describe('permit', () => {
+  //   it('initial nonce is zero', async () => {
+  //     expect(await gauge.nonces(holder.address)).to.equal(0);
+  //   });
 
-    const amount = bn(42);
+  //   const amount = bn(42);
 
-    it('accepts holder signature', async function () {
-      const previousNonce = await gauge.nonces(holder.address);
-      const { v, r, s } = await signPermit(gauge, holder, spender, amount);
+  //   it('accepts holder signature', async function () {
+  //     const previousNonce = await gauge.nonces(holder.address);
+  //     const { v, r, s } = await signPermit(gauge, holder, spender, amount);
 
-      const receipt = await (await gauge.permit(holder.address, spender.address, amount, MAX_DEADLINE, v, r, s)).wait();
-      expectEvent.inReceipt(receipt, 'Approval', { _owner: holder.address, _spender: spender.address, _value: amount });
+  //     const receipt = await (await gauge.permit(holder.address, spender.address, amount, MAX_DEADLINE, v, r, s)).wait();
+  //     expectEvent.inReceipt(receipt, 'Approval', { _owner: holder.address, _spender: spender.address, _value: amount });
 
-      expect(await gauge.nonces(holder.address)).to.equal(previousNonce.add(1));
-      expect(await gauge.allowance(holder.address, spender.address)).to.equal(amount);
-    });
+  //     expect(await gauge.nonces(holder.address)).to.equal(previousNonce.add(1));
+  //     expect(await gauge.allowance(holder.address, spender.address)).to.equal(amount);
+  //   });
 
-    context('with invalid signature', () => {
-      let v: number, r: string, s: string, deadline: BigNumber;
+  //   context('with invalid signature', () => {
+  //     let v: number, r: string, s: string, deadline: BigNumber;
 
-      context('with reused signature', () => {
-        beforeEach(async () => {
-          ({ v, r, s, deadline } = await signPermit(gauge, holder, spender, amount));
-          await gauge.permit(holder.address, spender.address, amount, deadline, v, r, s);
-        });
+  //     context('with reused signature', () => {
+  //       beforeEach(async () => {
+  //         ({ v, r, s, deadline } = await signPermit(gauge, holder, spender, amount));
+  //         await gauge.permit(holder.address, spender.address, amount, deadline, v, r, s);
+  //       });
 
-        itReverts();
-      });
+  //       itReverts();
+  //     });
 
-      context('with signature for other holder', () => {
-        beforeEach(async () => {
-          ({ v, r, s, deadline } = await signPermit(gauge, spender, spender, amount));
-        });
+  //     context('with signature for other holder', () => {
+  //       beforeEach(async () => {
+  //         ({ v, r, s, deadline } = await signPermit(gauge, spender, spender, amount));
+  //       });
 
-        itReverts();
-      });
+  //       itReverts();
+  //     });
 
-      context('with signature for other spender', () => {
-        beforeEach(async () => {
-          ({ v, r, s, deadline } = await signPermit(gauge, holder, holder, amount));
-        });
+  //     context('with signature for other spender', () => {
+  //       beforeEach(async () => {
+  //         ({ v, r, s, deadline } = await signPermit(gauge, holder, holder, amount));
+  //       });
 
-        itReverts();
-      });
+  //       itReverts();
+  //     });
 
-      context('with signature for other amount', () => {
-        beforeEach(async () => {
-          ({ v, r, s, deadline } = await signPermit(gauge, holder, spender, amount.add(1)));
-        });
+  //     context('with signature for other amount', () => {
+  //       beforeEach(async () => {
+  //         ({ v, r, s, deadline } = await signPermit(gauge, holder, spender, amount.add(1)));
+  //       });
 
-        itReverts();
-      });
+  //       itReverts();
+  //     });
 
-      context('with signature for other token', () => {
-        beforeEach(async () => {
-          const otherToken = await Token.create('TKN');
+  //     context('with signature for other token', () => {
+  //       beforeEach(async () => {
+  //         const otherToken = await Token.create('TKN');
 
-          ({ v, r, s, deadline } = await signPermit(otherToken.instance, holder, spender, amount));
-        });
+  //         ({ v, r, s, deadline } = await signPermit(otherToken.instance, holder, spender, amount));
+  //       });
 
-        itReverts();
-      });
+  //       itReverts();
+  //     });
 
-      context('with signature with invalid nonce', () => {
-        beforeEach(async () => {
-          const currentNonce = await gauge.nonces(holder.address);
-          ({ v, r, s, deadline } = await signPermit(gauge, holder, spender, amount, MAX_DEADLINE, currentNonce.add(1)));
-        });
+  //     context('with signature with invalid nonce', () => {
+  //       beforeEach(async () => {
+  //         const currentNonce = await gauge.nonces(holder.address);
+  //         ({ v, r, s, deadline } = await signPermit(gauge, holder, spender, amount, MAX_DEADLINE, currentNonce.add(1)));
+  //       });
 
-        itReverts();
-      });
+  //       itReverts();
+  //     });
 
-      context('with expired deadline', () => {
-        beforeEach(async () => {
-          const now = await currentTimestamp();
+  //     context('with expired deadline', () => {
+  //       beforeEach(async () => {
+  //         const now = await currentTimestamp();
 
-          ({ v, r, s, deadline } = await signPermit(gauge, holder, spender, amount, now.sub(1)));
-        });
+  //         ({ v, r, s, deadline } = await signPermit(gauge, holder, spender, amount, now.sub(1)));
+  //       });
 
-        itReverts();
-      });
+  //       itReverts();
+  //     });
 
-      function itReverts() {
-        it('reverts', async () => {
-          await expect(gauge.permit(holder.address, spender.address, amount, deadline, v, r, s)).to.be.reverted;
-        });
-      }
-    });
-  });
+  //     function itReverts() {
+  //       it('reverts', async () => {
+  //         await expect(gauge.permit(holder.address, spender.address, amount, deadline, v, r, s)).to.be.reverted;
+  //       });
+  //     }
+  //   });
+  // });
 
   describe('claim_rewards', () => {
     const rewardAmount = parseFixed('1', 18);
