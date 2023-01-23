@@ -71,8 +71,8 @@ describe('VE Admin', () => {
     await vault.authorizerAdaptorEntrypoint.performAction(votingEscrow.address, calldata);
   }
 
-  async function getOtherUserBalance(votingEscrow: Contract): Promise<BigNumber> {
-    return votingEscrow['balanceOf(address)'](other.address);
+  async function getOtherUserBalanceAtCurrentTimestamp(votingEscrow: Contract): Promise<BigNumber> {
+    return votingEscrow['balanceOf(address, uint256)'](other.address, await time.latest());
   }
 
   describe('admin VE tasks', () => {
@@ -103,7 +103,7 @@ describe('VE Admin', () => {
           const lockAmount = fp(1);
           await doCreateOtherUserMaxLock(votingEscrow, lockAmount);
           // Assert users new lock
-          const otherBalance = await getOtherUserBalance(votingEscrow);
+          const otherBalance = await getOtherUserBalanceAtCurrentTimestamp(votingEscrow);
 
           // Not going for dead on precision here,
           // but right around some decimals without error works for this check
@@ -128,7 +128,7 @@ describe('VE Admin', () => {
         it('updates lock amount for a user', async () => {
           const lockForIntialAmount = fp(1);
           await doCreateOtherUserMaxLock(votingEscrow, lockForIntialAmount);
-          const userBalance = await getOtherUserBalance(votingEscrow);
+          const userBalance = await getOtherUserBalanceAtCurrentTimestamp(votingEscrow);
 
           logEther(userBalance);
 
@@ -141,12 +141,53 @@ describe('VE Admin', () => {
           ]);
           await vault.authorizerAdaptorEntrypoint.performAction(votingEscrow.address, calldata);
 
-          const userNewBalance = await getOtherUserBalance(votingEscrow);
+          const userNewBalance = await getOtherUserBalanceAtCurrentTimestamp(votingEscrow);
 
           logEther(userNewBalance);
 
           // With no other users depositing, and using the same amount, this should hold true
           expectEqualWithError(userNewBalance, lockForIntialAmount.mul(2), 0.02);
+        });
+      });
+    });
+
+    describe('increasing total lock for users', () => {
+      let votingEscrow: Contract;
+
+      // context('enforce increasing stake restraints', () => {
+      //   context('staking for a user who does not have a current lock', () => {
+      //     it('reverts', async () => {});
+      //   });
+
+      //   context('increasing stake of an expired lock', () => {
+      //     it('reverts', async () => {});
+      //   });
+
+      //   context('setting new unlock time in the past', () => {
+      //     it('reverts', async () => {});
+      //   });
+
+      //   context('setting new unlock time beyond max allowed', () => {
+      //     it('reverts', async () => {});
+      //   });
+
+      //   context('setting new unlock time earlier than current locks end time', () => {
+      //     it('reverts', async () => {});
+      //   });
+      // });
+
+      context('updating users locked amount and end time', () => {
+        sharedBeforeEach('create voting escrow', async () => {
+          votingEscrow = await deployVotingEscrow();
+        });
+
+        sharedBeforeEach('authorize function calls', async () => {
+          await authorizeCall(votingEscrow, 'admin_create_lock_for');
+          await authorizeCall(votingEscrow, 'admin_increase_total_stake_for');
+        });
+
+        it('updates lock amount for a user', async () => {
+          // const lock = await votingEscrow.lock(other.address)
         });
       });
     });

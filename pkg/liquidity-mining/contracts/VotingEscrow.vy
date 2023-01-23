@@ -370,22 +370,22 @@ def _deposit_for(_addr: address, _value: uint256, unlock_time: uint256, locked_b
 
 
 @internal
-def _admin_deposit_for(_lockingFor: address, _value: uint256, unlock_time: uint256, locked_balance: LockedBalance, type: int128):
+def _admin_deposit_for(_lockingFor: address, _amount: uint256, unlock_time: uint256, locked_balance: LockedBalance, type: int128):
     """
-    @notice Admin deposit and lock tokens for a user
-    @notice Tokens are pulled from staking admin
-    @param _lockingFor User's wallet address
-    @param _value Amount to deposit
+    @notice Treasury admin deposit and lock tokens for a user
+    @notice Tokens are pulled from treasury staking admin
+    @param _lockingFor User being staked for wallet address
+    @param _amount Amount to deposit
     @param unlock_time New time when to unlock the tokens, or 0 if unchanged
     @param locked_balance Previous locked amount / timestamp
     """
     _locked: LockedBalance = locked_balance
     supply_before: uint256 = self.supply
 
-    self.supply = supply_before + _value
+    self.supply = supply_before + _amount
     old_locked: LockedBalance = _locked
     # Adding to existing lock, or if a lock is expired - creating a new one
-    _locked.amount += convert(_value, int128)
+    _locked.amount += convert(_amount, int128)
     if unlock_time != 0:
         _locked.end = unlock_time
     self.locked[_lockingFor] = _locked
@@ -396,12 +396,13 @@ def _admin_deposit_for(_lockingFor: address, _value: uint256, unlock_time: uint2
     # _locked.end > block.timestamp (always)
     self._checkpoint(_lockingFor, old_locked, _locked)
 
-    if _value != 0:
-        # pull from staking admin for user
-        assert ERC20(TOKEN).transferFrom(self._staking_admin, self, _value)
+    if _amount != 0:
+        # pull from treasury staking admin for user
+        assert ERC20(TOKEN).transferFrom(self._staking_admin, self, _amount)
 
-    log Deposit(_lockingFor, _value, _locked.end, type, block.timestamp)
-    log Supply(supply_before, supply_before + _value)
+    # Emit with the `_lockingFor` for consistency across history events
+    log Deposit(_lockingFor, _amount, _locked.end, type, block.timestamp)
+    log Supply(supply_before, supply_before + _amount)
 
 
 
@@ -553,10 +554,8 @@ def admin_increase_total_stake_for(_user: address, _amount: uint256,  _unlock_ti
     assert _locked.amount > 0, "No existing lock found"
     assert _locked.end > block.timestamp, "Cannot add to expired lock. Withdraw"
     assert unlock_time > block.timestamp, "Can only lock until time in the future"
-    # for simplicity this can be math'd before calling, to make sure 
-    # assert that unlock time > current lock time && < max lock
-    # assert unlock_time > _locked.end, "New unlock before current lock end"
     assert unlock_time <= block.timestamp + MAXTIME, "Voting lock can be 1 year max"
+    assert unlock_time > _locked.end, "New end time is before current lock end"
 
     self._admin_deposit_for(_user, _amount, unlock_time, _locked, INCREASE_LOCK_AMOUNT)
 
