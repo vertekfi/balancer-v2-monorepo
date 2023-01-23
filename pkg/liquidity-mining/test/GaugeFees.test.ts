@@ -2,7 +2,6 @@ import { ethers } from 'hardhat';
 import { BigNumber, Contract, ContractReceipt } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 
-import { expectEqualWithError } from '@balancer-labs/v2-helpers/src/test/relativeError';
 import * as expectEvent from '@balancer-labs/v2-helpers/src/test/expectEvent';
 import { deploy, deployedAt } from '@balancer-labs/v2-helpers/src/contract';
 import Vault from '@balancer-labs/v2-helpers/src/models/vault/Vault';
@@ -10,7 +9,6 @@ import { expect } from 'chai';
 import { actionId } from '@balancer-labs/v2-helpers/src/models/misc/actions';
 import { sharedBeforeEach } from '@balancer-labs/v2-common/sharedBeforeEach';
 import { fp } from '@balancer-labs/v2-helpers/src/numbers';
-import { formatEther } from 'ethers/lib/utils';
 import { ZERO_ADDRESS } from '@balancer-labs/v2-helpers/src/constants';
 
 const FEE_DENOMINATOR = 10000;

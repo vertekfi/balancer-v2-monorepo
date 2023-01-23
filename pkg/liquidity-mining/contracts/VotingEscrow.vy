@@ -99,6 +99,8 @@ slope_changes: public(HashMap[uint256, int128])  # time -> signed slope change
 future_smart_wallet_checker: public(address)
 smart_wallet_checker: public(address)
 
+_staking_admin: address
+
 
 @external
 def __init__(token_addr: address, _name: String[64], _symbol: String[32], _authorizer_adaptor: address):
@@ -115,6 +117,7 @@ def __init__(token_addr: address, _name: String[64], _symbol: String[32], _autho
     AUTHORIZER_ADAPTOR = _authorizer_adaptor
     self.point_history[0].blk = block.number
     self.point_history[0].ts = block.timestamp
+    self._staking_admin = msg.sender
 
     _decimals: uint256 = ERC20(token_addr).decimals()
     assert _decimals <= 255
@@ -367,10 +370,10 @@ def _deposit_for(_addr: address, _value: uint256, unlock_time: uint256, locked_b
 
 
 @internal
-def _admin_deposit_for( _approvedCaller: address, _lockingFor: address, _value: uint256, unlock_time: uint256, locked_balance: LockedBalance, type: int128):
+def _admin_deposit_for(_lockingFor: address, _value: uint256, unlock_time: uint256, locked_balance: LockedBalance, type: int128):
     """
     @notice Admin deposit and lock tokens for a user
-    @notice Tokens are pulled from staking admin(checks in calling functions since cannot access `msg.sender` here)
+    @notice Tokens are pulled from staking admin
     @param _lockingFor User's wallet address
     @param _value Amount to deposit
     @param unlock_time New time when to unlock the tokens, or 0 if unchanged
@@ -395,7 +398,7 @@ def _admin_deposit_for( _approvedCaller: address, _lockingFor: address, _value: 
 
     if _value != 0:
         # pull from staking admin for user
-        assert ERC20(TOKEN).transferFrom(_approvedCaller, self, _value)
+        assert ERC20(TOKEN).transferFrom(self._staking_admin, self, _value)
 
     log Deposit(_lockingFor, _value, _locked.end, type, block.timestamp)
     log Supply(supply_before, supply_before + _value)
@@ -494,7 +497,7 @@ def admin_create_lock_for(_addr: address, _value: uint256, _unlock_time: uint256
     @param _value Amount to deposit
     @param _unlock_time Epoch time when tokens unlock, rounded down to whole weeks
     """
-    assert msg.sender == AUTHORIZER_ADAPTOR
+    assert msg.sender == AUTHORIZER_ADAPTOR, "Unauthorized"
 
     unlock_time: uint256 = (_unlock_time / WEEK) * WEEK  # Locktime is rounded down to weeks
     _locked: LockedBalance = self.locked[_addr]
@@ -505,8 +508,8 @@ def admin_create_lock_for(_addr: address, _value: uint256, _unlock_time: uint256
     assert unlock_time > block.timestamp, "Can only lock until time in the future"
     assert unlock_time <= block.timestamp + MAXTIME, "Voting lock can be 1 year max"
 
-    # msg.sender since tokens are pulled from staking admin
-    self._admin_deposit_for(msg.sender, _addr, _value, unlock_time, _locked, CREATE_LOCK_TYPE)
+
+    self._admin_deposit_for(_addr, _value, unlock_time, _locked, CREATE_LOCK_TYPE)
     
 @external
 @nonreentrant('lock')
@@ -516,7 +519,9 @@ def admin_increase_amount_for(_user: address, _value: uint256):
     Allows treasury to add to the stake of current investors.
     @param _value Amount of tokens to deposit and add to the lock
     """
-    assert msg.sender == AUTHORIZER_ADAPTOR
+    assert msg.sender == AUTHORIZER_ADAPTOR, "Unauthorized"
+    assert self._staking_admin != ZERO_ADDRESS, "Admin not set"
+    assert _user != ZERO_ADDRESS, "User not provided"
 
     _locked: LockedBalance = self.locked[_user]
 
@@ -524,8 +529,7 @@ def admin_increase_amount_for(_user: address, _value: uint256):
     assert _locked.amount > 0, "No existing lock found"
     assert _locked.end > block.timestamp, "Cannot add to expired lock. Withdraw"
 
-    # msg.sender since tokens are pulled from staking admin
-    self._admin_deposit_for(msg.sender, _user, _value, 0, _locked, INCREASE_LOCK_AMOUNT)
+    self._admin_deposit_for(_user, _value, 0, _locked, INCREASE_LOCK_AMOUNT)
 
 @external
 @nonreentrant('lock')
@@ -536,7 +540,9 @@ def admin_increase_total_stake_for(_user: address, _value: uint256,  _unlock_tim
     This is for those who have approved increased lock time with their additional investment.
     @param _value Amount of tokens to deposit and add to the lock
     """
-    assert msg.sender == AUTHORIZER_ADAPTOR
+    assert msg.sender == AUTHORIZER_ADAPTOR, "Unauthorized"
+    assert self._staking_admin != ZERO_ADDRESS, "Admin not set"
+    assert _user != ZERO_ADDRESS, "User not provided"
    
     unlock_time: uint256 = (_unlock_time / WEEK) * WEEK  # Locktime is rounded down to weeks
     _locked: LockedBalance = self.locked[_user]
@@ -551,8 +557,7 @@ def admin_increase_total_stake_for(_user: address, _value: uint256,  _unlock_tim
     # assert unlock_time > _locked.end, "New unlock before current lock end"
     assert unlock_time <= block.timestamp + MAXTIME, "Voting lock can be 1 year max"
 
-    # msg.sender since tokens are pulled from staking admin
-    self._admin_deposit_for(msg.sender, _user, _value, unlock_time, _locked, INCREASE_LOCK_AMOUNT)
+    self._admin_deposit_for(_user, _value, unlock_time, _locked, INCREASE_LOCK_AMOUNT)
 
 
 @external
@@ -820,3 +825,21 @@ def totalSupplyAt(_block: uint256) -> uint256:
     # Now dt contains info on how far are we beyond point
 
     return self.supply_at(point, point.ts + dt)
+
+
+@external
+def setStakingAdmin(_admin: address):
+    """
+    @notice Sets a new treasury staking admin account
+    """
+    assert msg.sender == AUTHORIZER_ADAPTOR, "Unauthorized"
+    # No zero address check to allow disabling admin
+    self._staking_admin = _admin
+
+@external
+@view
+def getStakingAdmin() -> address:
+    """
+    @notice Gets the address of the treasury staking admin account
+    """
+    return self._staking_admin
