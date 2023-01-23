@@ -4,14 +4,14 @@ import { ethers } from 'hardhat';
 
 import { deploy } from '@balancer-labs/v2-helpers/src/contract';
 import Vault from '@balancer-labs/v2-helpers/src/models/vault/Vault';
-import * as expectEvent from '@balancer-labs/v2-helpers/src/test/expectEvent';
+import { expectEqualWithError } from '@balancer-labs/v2-helpers/src/test/relativeError';
 import { time } from '@nomicfoundation/hardhat-network-helpers';
 import { actionId } from '@balancer-labs/v2-helpers/src/models/misc/actions';
 import { expect } from 'chai';
 import { sharedBeforeEach } from '@balancer-labs/v2-common/sharedBeforeEach';
 import { MAX_UINT256 } from '@balancer-labs/v2-helpers/src/constants';
-import { fp } from '@balancer-labs/v2-helpers/src/numbers';
-import { WEEK } from '@balancer-labs/v2-helpers/src/time';
+import { BigNumber, fp } from '@balancer-labs/v2-helpers/src/numbers';
+import { fromNow, ONE_YEAR_SECONDS } from '@balancer-labs/v2-helpers/src/time';
 import { formatEther } from 'ethers/lib/utils';
 
 describe('VE Admin', () => {
@@ -51,35 +51,103 @@ describe('VE Admin', () => {
     return votingEscrow;
   }
 
+  function logEther(value: BigNumber) {
+    console.log(formatEther(value));
+  }
+
   function getCalldata(instance: Contract, method: string, args: any[] = []) {
     return instance.interface.encodeFunctionData(method, args);
   }
 
-  async function setStakingAdmin(votingEscrow: Contract) {
-    await authorizeCall(votingEscrow, 'setStakingAdmin');
-    const calldata = getCalldata(votingEscrow, 'setStakingAdmin', [admin.address]);
+  // async function setStakingAdmin(votingEscrow: Contract) {
+  //   await authorizeCall(votingEscrow, 'setStakingAdmin');
+  //   const calldata = getCalldata(votingEscrow, 'setStakingAdmin', [admin.address]);
+  //   await vault.authorizerAdaptorEntrypoint.performAction(votingEscrow.address, calldata);
+  // }
+
+  async function doCreateOtherUserMaxLock(votingEscrow: Contract, lockAmount: BigNumber) {
+    const lockEndTime = await fromNow(ONE_YEAR_SECONDS);
+    const calldata = getCalldata(votingEscrow, 'admin_create_lock_for', [other.address, lockAmount, lockEndTime]);
     await vault.authorizerAdaptorEntrypoint.performAction(votingEscrow.address, calldata);
   }
 
-  describe('Locking for users', () => {
-    let votingEscrow: Contract;
+  async function getOtherUserBalance(votingEscrow: Contract): Promise<BigNumber> {
+    return votingEscrow['balanceOf(address)'](other.address);
+  }
 
-    sharedBeforeEach('create voting escrow', async () => {
-      votingEscrow = await deployVotingEscrow();
-      await setStakingAdmin(votingEscrow);
-    });
+  describe('admin VE tasks', () => {
+    describe('Initialization', () => {
+      let votingEscrow: Contract;
 
-    context('creating locks for users', () => {
       sharedBeforeEach('create voting escrow', async () => {
         votingEscrow = await deployVotingEscrow();
-        await authorizeCall(votingEscrow, 'admin_create_lock_for');
       });
+      it('sets staking admin to message sender', async () => {
+        expect(await votingEscrow.getStakingAdmin()).to.equal(admin.address);
+      });
+    });
 
-      it('creates a lock for a user', async () => {
-        const lockAmount = fp(100);
-        const lockEndTime = (await time.latest()) + WEEK * 2;
-        const calldata = getCalldata(votingEscrow, 'admin_create_lock_for', [other.address, lockAmount, lockEndTime]);
-        await vault.authorizerAdaptorEntrypoint.connect(admin).performAction(votingEscrow.address, calldata);
+    describe('creating locks for users', () => {
+      let votingEscrow: Contract;
+
+      context('creating locks for users', () => {
+        sharedBeforeEach('create voting escrow', async () => {
+          votingEscrow = await deployVotingEscrow();
+        });
+
+        sharedBeforeEach('authorize function calls', async () => {
+          await authorizeCall(votingEscrow, 'admin_create_lock_for');
+        });
+
+        it('creates a lock for a user', async () => {
+          const lockAmount = fp(1);
+          await doCreateOtherUserMaxLock(votingEscrow, lockAmount);
+          // Assert users new lock
+          const otherBalance = await getOtherUserBalance(votingEscrow);
+
+          // Not going for dead on precision here,
+          // but right around some decimals without error works for this check
+          expectEqualWithError(otherBalance, lockAmount, 0.02);
+        });
+      });
+    });
+
+    describe('updating lock amount for users', () => {
+      let votingEscrow: Contract;
+
+      context('updating users locked amount', () => {
+        sharedBeforeEach('create voting escrow', async () => {
+          votingEscrow = await deployVotingEscrow();
+        });
+
+        sharedBeforeEach('authorize function calls', async () => {
+          await authorizeCall(votingEscrow, 'admin_create_lock_for');
+          await authorizeCall(votingEscrow, 'admin_increase_amount_for');
+        });
+
+        it('updates lock amount for a user', async () => {
+          const lockForIntialAmount = fp(1);
+          await doCreateOtherUserMaxLock(votingEscrow, lockForIntialAmount);
+          const userBalance = await getOtherUserBalance(votingEscrow);
+
+          logEther(userBalance);
+
+          expectEqualWithError(userBalance, lockForIntialAmount, 0.02);
+
+          const lockForAdditionalAmount = fp(1);
+          const calldata = getCalldata(votingEscrow, 'admin_increase_amount_for', [
+            other.address,
+            lockForAdditionalAmount,
+          ]);
+          await vault.authorizerAdaptorEntrypoint.performAction(votingEscrow.address, calldata);
+
+          const userNewBalance = await getOtherUserBalance(votingEscrow);
+
+          logEther(userNewBalance);
+
+          // With no other users depositing, and using the same amount, this should hold true
+          expectEqualWithError(userNewBalance, lockForIntialAmount.mul(2), 0.02);
+        });
       });
     });
   });

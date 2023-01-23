@@ -513,11 +513,12 @@ def admin_create_lock_for(_addr: address, _value: uint256, _unlock_time: uint256
     
 @external
 @nonreentrant('lock')
-def admin_increase_amount_for(_user: address, _value: uint256):
+def admin_increase_amount_for(_user: address, _amount: uint256):
     """
-    @notice Deposit `_value` additional tokens for `_user` WITHOUT modifying the unlock time.
+    @notice Deposit `_amount` additional tokens for `_user` WITHOUT modifying the unlock time.
     Allows treasury to add to the stake of current investors.
-    @param _value Amount of tokens to deposit and add to the lock
+    deposit_for is available but we're having this match the flow of the other related admin calls.
+    @param _amount Amount of tokens to deposit and add to the lock
     """
     assert msg.sender == AUTHORIZER_ADAPTOR, "Unauthorized"
     assert self._staking_admin != ZERO_ADDRESS, "Admin not set"
@@ -525,20 +526,20 @@ def admin_increase_amount_for(_user: address, _value: uint256):
 
     _locked: LockedBalance = self.locked[_user]
 
-    assert _value > 0  # dev: need non-zero value
+    assert _amount > 0  # dev: need non-zero value
     assert _locked.amount > 0, "No existing lock found"
     assert _locked.end > block.timestamp, "Cannot add to expired lock. Withdraw"
 
-    self._admin_deposit_for(_user, _value, 0, _locked, INCREASE_LOCK_AMOUNT)
+    self._admin_deposit_for(_user, _amount, 0, _locked, INCREASE_LOCK_AMOUNT)
 
 @external
 @nonreentrant('lock')
-def admin_increase_total_stake_for(_user: address, _value: uint256,  _unlock_time: uint256):
+def admin_increase_total_stake_for(_user: address, _amount: uint256,  _unlock_time: uint256):
     """
-    @notice Deposit `_value` additional tokens for `_user` AND update the unlock time.
+    @notice Deposit `_amount` additional tokens for `_user` AND update the unlock time.
     Allows treasury to add to the stake of current investors.
     This is for those who have approved increased lock time with their additional investment.
-    @param _value Amount of tokens to deposit and add to the lock
+    @param _amount Amount of tokens to deposit and add to the lock
     """
     assert msg.sender == AUTHORIZER_ADAPTOR, "Unauthorized"
     assert self._staking_admin != ZERO_ADDRESS, "Admin not set"
@@ -548,7 +549,7 @@ def admin_increase_total_stake_for(_user: address, _value: uint256,  _unlock_tim
     _locked: LockedBalance = self.locked[_user]
 
     # make sure user has a lock and it is not expired
-    assert _value > 0  # dev: need non-zero value
+    assert _amount > 0  # dev: need non-zero value
     assert _locked.amount > 0, "No existing lock found"
     assert _locked.end > block.timestamp, "Cannot add to expired lock. Withdraw"
     assert unlock_time > block.timestamp, "Can only lock until time in the future"
@@ -557,7 +558,7 @@ def admin_increase_total_stake_for(_user: address, _value: uint256,  _unlock_tim
     # assert unlock_time > _locked.end, "New unlock before current lock end"
     assert unlock_time <= block.timestamp + MAXTIME, "Voting lock can be 1 year max"
 
-    self._admin_deposit_for(_user, _value, unlock_time, _locked, INCREASE_LOCK_AMOUNT)
+    self._admin_deposit_for(_user, _amount, unlock_time, _locked, INCREASE_LOCK_AMOUNT)
 
 
 @external
