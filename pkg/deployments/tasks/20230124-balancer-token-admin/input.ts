@@ -9,7 +9,12 @@ export type TokenAdminDeployment = {
 };
 
 export default {
-  Vault: new Task('20230117-vault', TaskMode.READ_ONLY),
-  GovernanceToken: new Task('20230117-governance-token', TaskMode.READ_ONLY),
+  Vault: new Task('20230124-vault', TaskMode.READ_ONLY),
+  bsc: {
+    GovernanceToken: '0x5Be975013095AEa033dB098787C56e5867107060',
+  },
+  goerli: {
+    GovernanceToken: '0xa5694789C0BaED77d16ca36edC45C9366DBFe0A9',
+  },
   initialMintAllowance: fp(1250000),
 };
