@@ -736,7 +736,7 @@ def deposit_reward_token(_reward_token: address, _amount: uint256):
         max_outsize=32,
     )
     if len(response) != 0:
-        assert convert(response, bool)
+        assert convert(response, bool), "Deposit reward token transferFrom error"
 
     period_finish: uint256 = self.reward_data[_reward_token].period_finish
     if block.timestamp >= period_finish:
