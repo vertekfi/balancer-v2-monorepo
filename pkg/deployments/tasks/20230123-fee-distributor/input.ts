@@ -6,10 +6,10 @@ export type FeeDistributorDeployment = {
 };
 
 export default {
-  VotingEscrow: new Task('20230120-voting-escrow', TaskMode.READ_ONLY),
-  // mainnet: {
-  //   startTime: 1657756800, // Thursday, July 14 2022 00:00:00 UTC
-  // },
+  VotingEscrow: new Task('20230124-voting-escrow', TaskMode.READ_ONLY),
+  mainnet: {
+    startTime: 1674691200, // Thursday, January 26 2024 00:00:00 UTC - 2023-01-26T00:00:00Z
+  },
   goerli: {
     startTime: 1674455329, // testing Jan 23 2023 ~1:30AM EST
   },

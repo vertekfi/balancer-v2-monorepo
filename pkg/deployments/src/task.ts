@@ -122,6 +122,7 @@ export default class Task {
       logger.success(`Deployed ${name} at ${instance.address}`);
 
       if (this.mode === TaskMode.LIVE) {
+        console.log(`"${instance.address}":"${instance.deployTransaction.hash}"`);
         saveContractDeploymentTransactionHash(instance.address, instance.deployTransaction.hash, this.network);
       }
     } else {
