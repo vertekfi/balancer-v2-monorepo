@@ -5,7 +5,7 @@ export type AuthorizersInput = {
   rootTransferDelay: number;
 };
 
-const vaultTask = new Task('20230117-vault', TaskMode.READ_ONLY);
+const vaultTask = new Task('20230124-vault', TaskMode.READ_ONLY);
 export default {
   Vault: vaultTask,
   rootTransferDelay: 0,

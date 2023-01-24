@@ -33,6 +33,5 @@ export default async (task: Task, { force, from }: TaskRunOptions = {}): Promise
     adaptorEntrypoint.address,
     input.rootTransferDelay,
   ]);
-
   await task.verify('TimelockExecutor', executor, []);
 };
