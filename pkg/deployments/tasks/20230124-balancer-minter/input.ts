@@ -6,8 +6,6 @@ export type BalMinterDeployment = {
 };
 
 export default {
-  goerli: {
-    BalancerTokenAdmin: new Task('20230124-balancer-token-admin', TaskMode.READ_ONLY),
-    GaugeController: new Task('20230124-gauge-controller', TaskMode.READ_ONLY),
-  },
+  BalancerTokenAdmin: new Task('20230124-balancer-token-admin', TaskMode.READ_ONLY),
+  GaugeController: new Task('20230124-gauge-controller', TaskMode.READ_ONLY),
 };
