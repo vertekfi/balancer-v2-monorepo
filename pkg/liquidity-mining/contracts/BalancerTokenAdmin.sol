@@ -141,7 +141,7 @@ contract BalancerTokenAdmin is IBalancerTokenAdmin, SingletonAuthentication, Ree
         _balancerToken.mint(msg.sender, _initialMintAllowance);
 
         // As BAL inflation is now enforced by this contract we can initialise the relevant variables.
-        _startEpochSupply = _balancerToken.totalSupply().sub(_initialMintAllowance);
+        _startEpochSupply = 0;
         _startEpochTime = block.timestamp;
         _rate = INITIAL_RATE;
         emit MiningParametersUpdated(INITIAL_RATE, _startEpochSupply);

@@ -1,42 +1,20 @@
 import Task from '../../src/task';
 import { TaskRunOptions } from '../../src/types';
-
-import VaultDeployer from '@balancer-labs/v2-helpers/src/models/vault/VaultDeployer';
 import { RawVaultDeployment } from '@balancer-labs/v2-helpers/src/models/vault/types';
-import { getSigner } from '../../src/signers';
-import TypesConverter from '@balancer-labs/v2-helpers/src/models/types/TypesConverter';
 
 export default async (task: Task, { force, from }: TaskRunOptions = {}): Promise<void> => {
   let input = task.input() as RawVaultDeployment;
 
-  const admin = await getSigner();
+  const basicAuthorizer = await task.deploy('MockBasicAuthorizer');
 
-  const deployment = TypesConverter.toVaultDeployment({
-    ...input,
-    admin,
-  });
-
-  const basicAuthorizer = await VaultDeployer._deployBasicAuthorizer(admin);
-  await task.save({ MockBasicAuthorizer: basicAuthorizer.address });
-  console.log('MockBasicAuthorizer deployed to: ' + basicAuthorizer.address);
-
-  const vault = await VaultDeployer._deployReal(deployment, basicAuthorizer.address);
-  await task.save({ Vault: vault.address });
-
-  console.log('Vault deployed to: ' + vault.address);
-
-  // The vault automatically also deploys the protocol fees collector: we must verify it
-  const feeCollectorAddress = await vault.getProtocolFeesCollector();
-  const feeCollectorArgs = [vault.address]; // See ProtocolFeesCollector constructor
-  await task.save({ ProtocolFeesCollector: feeCollectorAddress });
-
-  console.log('ProtocolFeesCollector deployed to: ' + feeCollectorAddress);
-
-  await task.verify('ProtocolFeesCollector', feeCollectorAddress, feeCollectorArgs);
-  await task.verify('Vault', vault.address, [
+  const vault = await task.deployAndVerify('Vault', [
     basicAuthorizer.address,
     input.WETH,
     input.pauseWindowDuration,
     input.bufferPeriodDuration,
   ]);
+
+  // The vault automatically also deploys the protocol fees collector: we must verify it
+  const feeCollectorAddress = await vault.getProtocolFeesCollector();
+  await task.save({ ProtocolFeesCollector: feeCollectorAddress });
 };

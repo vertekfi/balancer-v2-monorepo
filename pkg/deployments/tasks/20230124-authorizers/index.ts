@@ -10,21 +10,8 @@ export default async (task: Task, { force, from }: TaskRunOptions = {}): Promise
 
   const admin = await getSigner();
 
-  // AuthorizerAdaptor
-  // const authorizerAdaptor = await VaultDeployer._deployAuthorizerAdaptor(input.Vault, admin);
-  // await task.save({ AuthorizerAdaptor: authorizerAdaptor.address });
-
   const authorizerAdaptor = await task.deployAndVerify('AuthorizerAdaptor', [input.Vault]);
-
-  // AuthorizerAdaptorEntrypoint
-  // const adaptorEntrypoint = await VaultDeployer._deployAuthorizerAdaptorEntrypoint(authorizerAdaptor.address);
-  // await task.save({ AuthorizerAdaptorEntrypoint: adaptorEntrypoint.address });
-
   const adaptorEntrypoint = await task.deployAndVerify('AuthorizerAdaptorEntrypoint', [authorizerAdaptor.address]);
-
-  // TimelockAuthorizer
-  // const timelockAuth = await VaultDeployer._deployAuthorizer(admin, adaptorEntrypoint.address, input.rootTransferDelay);
-  // await task.save({ TimelockAuthorizer: timelockAuth.address });
   const timelockAuth = await task.deployAndVerify('TimelockAuthorizer', [
     admin.address,
     adaptorEntrypoint.address,
@@ -35,13 +22,4 @@ export default async (task: Task, { force, from }: TaskRunOptions = {}): Promise
   const executor = await timelockAuth.getExecutor();
   await task.save({ TimelockExecutor: executor });
   await task.verify('TimelockExecutor', executor, []);
-
-  // Attempt verifications then
-  //  await task.verify('AuthorizerAdaptor', authorizerAdaptor.address, [input.Vault]);
-  // await task.verify('AuthorizerAdaptorEntrypoint', adaptorEntrypoint.address, [authorizerAdaptor.address]);
-  // await task.verify('TimelockAuthorizer', timelockAuth.address, [
-  //   admin.address,
-  //   adaptorEntrypoint.address,
-  //   input.rootTransferDelay,
-  // ]);
 };
