@@ -1,6 +1,6 @@
 {
-  "AuthorizerAdaptor": "0x260c9Dce78D7cf30db16f5AE068B8AF9F37e92F7",
-  "AuthorizerAdaptorEntrypoint": "0xe278858D55848cf70908F427E0e0D1CD723035a2",
-  "TimelockAuthorizer": "0x9Aed49fF5bCFEbCBCf0CCD54964917daFe930de7",
-  "TimelockExecutor": "0x014BFbcd8Bdf4FBa074E99eB11909a0a72f4727E"
+  "AuthorizerAdaptor": "0xC3239522Dc093D38F0B73E2a47D55Ed844A03033",
+  "AuthorizerAdaptorEntrypoint": "0x995867756f901e1589dDE4Fee09dd6cb26E39201",
+  "TimelockAuthorizer": "0xA89bb713f49B5Ce26b1442C2207706E848486a44",
+  "TimelockExecutor": "0xBc4e809A2fD4F53140290aACBD838d4921C1F2D5"
 }

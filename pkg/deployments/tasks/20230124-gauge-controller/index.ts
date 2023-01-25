@@ -6,5 +6,5 @@ export default async (task: Task, { force, from }: TaskRunOptions = {}): Promise
   const input = task.input() as GaugeSystemDeployment;
 
   const gaugeControllerArgs = [input.VotingEscrow, input.AuthorizerAdaptor];
-  await task.deploy('GaugeController', gaugeControllerArgs, from, force);
+  await task.deployAndVerify('GaugeController', gaugeControllerArgs, from, force);
 };

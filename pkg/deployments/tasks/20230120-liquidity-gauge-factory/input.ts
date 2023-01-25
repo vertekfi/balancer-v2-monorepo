@@ -7,7 +7,7 @@ export type LiquidityGaugeFactoryDeployment = {
 };
 
 export default {
-  AuthorizerAdaptor: new Task('20230117-authorizers', TaskMode.READ_ONLY),
-  BalancerMinter: new Task('20230120-balancer-minter', TaskMode.READ_ONLY),
-  VotingEscrowDelegationProxy: new Task('20230120-ve-delegation', TaskMode.READ_ONLY),
+  AuthorizerAdaptor: new Task('20230124-authorizers', TaskMode.READ_ONLY),
+  BalancerMinter: new Task('20230124-balancer-minter', TaskMode.READ_ONLY),
+  VotingEscrowDelegationProxy: new Task('20230124-ve-delegation', TaskMode.READ_ONLY),
 };

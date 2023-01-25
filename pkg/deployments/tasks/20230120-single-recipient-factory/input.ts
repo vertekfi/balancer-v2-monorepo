@@ -5,5 +5,5 @@ export type SingleRecipientFactoryDelegationDeployment = {
 };
 
 export default {
-  BalancerMinter: new Task('20230120-balancer-minter', TaskMode.READ_ONLY),
+  BalancerMinter: new Task('20230124-balancer-minter', TaskMode.READ_ONLY),
 };

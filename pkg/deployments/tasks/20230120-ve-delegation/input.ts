@@ -6,6 +6,6 @@ export type VotingEscrowDelegationDeployment = {
 };
 
 export default {
-  Vault: new Task('20230117-vault', TaskMode.READ_ONLY),
-  VotingEscrow: new Task('20230120-voting-escrow', TaskMode.READ_ONLY),
+  Vault: new Task('20230124-vault', TaskMode.READ_ONLY),
+  VotingEscrow: new Task('20230124-voting-escrow', TaskMode.READ_ONLY),
 };
