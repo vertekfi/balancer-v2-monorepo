@@ -1,4 +1,4 @@
-# 2022-01-17 - Weighted Pool Factory V2
+# 2023-01-24 - Weighted Pool Factory V2
 
 Deployment of the `WeightedPoolFactory`, which allows creating Weighted Pools which include a number of improvements, including:
 
