@@ -178,6 +178,23 @@ describe('GaugeAdder', () => {
         });
 
         it('registers the gauge on the GaugeController', async () => {
+          const tx = await gaugeAdder.connect(admin).addEthereumGauge(gauge);
+
+          expectEvent.inIndirectReceipt(await tx.wait(), gaugeController.interface, 'NewGauge', {
+            addr: gauge,
+            gauge_type: GaugeType.Ethereum,
+            weight: 0,
+          });
+        });
+
+        it('allows duplicate gauges for the same pool', async () => {
+          const tx = await gaugeAdder.connect(admin).addEthereumGauge(gauge);
+          expectEvent.inIndirectReceipt(await tx.wait(), gaugeController.interface, 'NewGauge', {
+            addr: gauge,
+            gauge_type: GaugeType.Ethereum,
+            weight: 0,
+          });
+
           const dupeGauge = await deployGauge(gaugeFactory, ANY_ADDRESS);
           const dupeTx = await gaugeAdder.connect(admin).addEthereumGauge(dupeGauge);
           expectEvent.inIndirectReceipt(await dupeTx.wait(), gaugeController.interface, 'NewGauge', {
