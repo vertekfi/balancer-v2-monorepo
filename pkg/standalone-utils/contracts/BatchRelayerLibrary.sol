@@ -26,6 +26,8 @@ import "./relayer/ReaperWrapping.sol";
 import "./relayer/VaultActions.sol";
 import "./relayer/VaultPermit.sol";
 
+import "./relayer/BNBxWrapping.sol";
+
 /**
  * @title Batch Relayer Library
  * @notice This contract is not a relayer by itself and calls into it directly will fail.
@@ -40,13 +42,15 @@ contract BatchRelayerLibrary is
     UnbuttonWrapping,
     ReaperWrapping,
     VaultActions,
-    VaultPermit
+    VaultPermit,
+    BNBxWrapping
 {
     constructor(
         IVault vault,
         IERC20 wstETH,
-        IBalancerMinter minter
-    ) BaseRelayerLibrary(vault) LidoWrapping(wstETH) GaugeActions(minter) {
+        IBalancerMinter minter,
+        IERC20 wBNBx
+    ) BaseRelayerLibrary(vault) LidoWrapping(wstETH) GaugeActions(minter) BNBxWrapping(wBNBx) {
         // solhint-disable-previous-line no-empty-blocks
     }
 }

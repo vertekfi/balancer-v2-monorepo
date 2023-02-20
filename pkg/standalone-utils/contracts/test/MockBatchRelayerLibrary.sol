@@ -25,8 +25,9 @@ contract MockBatchRelayerLibrary is BatchRelayerLibrary {
     constructor(
         IVault vault,
         IERC20 wstETH,
-        IBalancerMinter minter
-    ) BatchRelayerLibrary(vault, wstETH, minter) {}
+        IBalancerMinter minter,
+        IERC20 wBNBx
+    ) BatchRelayerLibrary(vault, wstETH, minter, wBNBx) {}
 
     function setChainedReferenceValue(uint256 ref, uint256 value) public {
         _setChainedReferenceValue(ref, value);
