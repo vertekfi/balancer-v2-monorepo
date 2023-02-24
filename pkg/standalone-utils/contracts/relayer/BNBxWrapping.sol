@@ -73,4 +73,33 @@ abstract contract BNBxWrapping is IBaseRelayerLibrary {
             _setChainedReferenceValue(outputReference, result);
         }
     }
+
+    function unwrapBNBx(
+        address sender,
+        address recipient,
+        uint256 amount,
+        uint256 outputReference
+    ) external payable {
+        if (_isChainedReference(amount)) {
+            amount = _getChainedReferenceValue(amount);
+        }
+
+        // The unwrap caller is the implicit token sender, so if the goal is for the tokens
+        // to be sourced from outside the relayer, we must first pull them here.
+        if (sender != address(this)) {
+            require(sender == msg.sender, "Incorrect sender");
+            _pullToken(sender, _wrappedBNBx, amount);
+        }
+
+        // No approval is needed here, as wBNBx is burned directly from the relayer's account
+        uint256 result = _wrappedBNBx.unwrap(amount);
+
+        if (recipient != address(this)) {
+            IERC20(_BNBx).safeTransfer(recipient, result);
+        }
+
+        if (_isChainedReference(outputReference)) {
+            _setChainedReferenceValue(outputReference, result);
+        }
+    }
 }
