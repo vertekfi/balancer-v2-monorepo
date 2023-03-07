@@ -37,7 +37,7 @@ abstract contract BNBxWrapping is IBaseRelayerLibrary {
 
     /**
      * @dev The zero address may be passed as wBNBx to safely disable this module
-     * @param wBNBx - the address of Lido's wrapped wBNBx contract
+     * @param wBNBx - the address of the wrapped wBNBx contract
      */
     constructor(IERC20 wBNBx) {
         // Safely disable BNBx wrapping if no address has been passed for wBNBx
