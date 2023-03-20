@@ -9,4 +9,7 @@ export default {
   goerli: {
     WETH: '0xe4E96Cf369D4d604Bedc4d7962F94D53E4B5e3C6',
   },
+  arbitrum: {
+    WETH: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
+  },
 };
