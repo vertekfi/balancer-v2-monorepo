@@ -1,6 +1,7 @@
 import { ZERO_ADDRESS } from '@balancer-labs/v2-helpers/src/constants';
 import { bn, fp } from '@balancer-labs/v2-helpers/src/numbers';
 import * as expectEvent from '@balancer-labs/v2-helpers/src/test/expectEvent';
+import { ethers } from 'hardhat';
 
 import { getContractDeploymentTransactionHash, saveContractDeploymentTransactionHash } from '../../src/network';
 import Task, { TaskMode } from '../../src/task';
@@ -86,7 +87,7 @@ export default async (task: Task, { force, from }: TaskRunOptions = {}): Promise
       mockPoolArgs.pauseWindowDuration,
       mockPoolArgs.bufferPeriodDuration,
       mockPoolArgs.owner,
-      mockPoolArgs.version,
+      // mockPoolArgs.version,
     ]);
   }
 };
