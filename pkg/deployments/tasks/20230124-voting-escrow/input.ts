@@ -10,6 +10,9 @@ export default {
   bsc: {
     BPT: '0xDD64E2EC144571b4320f7BFB14a56b2b2cBF37ad', // BPT of the canonical 80-20 BAL-WETH Pool
   },
+  arbitrum: {
+    BPT: '0x289F6E6C7D3a86CE76f9aeA0ECE0e3517F18E09A',
+  },
   goerli: {
     BPT: '0xD0F30B415C65B99904caF716ABc3da23f57d3cdd', // BPT of an 80-20 BAL-WETH Pool using test BAL
   },
