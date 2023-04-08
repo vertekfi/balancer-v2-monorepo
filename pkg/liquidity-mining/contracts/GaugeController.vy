@@ -544,13 +544,13 @@ def _vote_for_gauge_weights(_user: address, _gauge_addr: address, _user_weight: 
 
     log VoteForGauge(block.timestamp, _user, _gauge_addr, _user_weight)
 
-@external
-@nonreentrant('lock')
-def vote_for_many_gauge_weights(_gauge_addrs: address[8], _user_weight: uint256[8]):
-    for i in range(8):
-        if _gauge_addrs[i] == ZERO_ADDRESS:
-            break
-        self._vote_for_gauge_weights(msg.sender, _gauge_addrs[i], _user_weight[i])
+# @external
+# @nonreentrant('lock')
+# def vote_for_many_gauge_weights(_gauge_addrs: address[8], _user_weight: uint256[8]):
+#     for i in range(8):
+#         if _gauge_addrs[i] == ZERO_ADDRESS:
+#             break
+#         self._vote_for_gauge_weights(msg.sender, _gauge_addrs[i], _user_weight[i])
 
 @external
 def vote_for_gauge_weights(_gauge_addr: address, _user_weight: uint256):
