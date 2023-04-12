@@ -8,7 +8,7 @@ export type FeeDistributorDeployment = {
 export default {
   VotingEscrow: new Task('20230124-voting-escrow', TaskMode.READ_ONLY),
   arbitrum: {
-    startTime: 1681948800, // Thursday 4/20 00:00:oo UTC
+    startTime: 1681948800, // Thursday 4/20 00:00:00 UTC
   },
   bsc: {
     startTime: 1674691200, // Thursday, January 26 2024 00:00:00 UTC - 2023-01-26T00:00:00Z
