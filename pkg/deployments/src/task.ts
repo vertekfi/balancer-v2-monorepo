@@ -20,7 +20,6 @@ import {
   RawInputKeyValue,
   RawOutput,
   TaskRunOptions,
-  ITask,
 } from './types';
 import { getContractDeploymentTransactionHash, saveContractDeploymentTransactionHash } from './network';
 import { getTaskActionIds } from './actionId';
@@ -39,7 +38,7 @@ export enum TaskMode {
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 
-export default class Task implements ITask {
+export default class Task {
   id: string;
   mode: TaskMode;
 

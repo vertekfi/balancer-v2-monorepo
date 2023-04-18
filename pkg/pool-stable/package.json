@@ -18,6 +18,7 @@
   ],
   "scripts": {
     "build": "yarn compile",
+    "build:zksync": "rimraf ./artifacts-zk && rimraf ./cache-zk && hardhat compile --config ./zksync-hardhat.config.ts",
     "compile": "hardhat compile && rimraf artifacts/build-info",
     "compile:watch": "nodemon --ext sol --exec yarn compile",
     "lint": "yarn lint:solidity && yarn lint:typescript",
