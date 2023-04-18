@@ -225,18 +225,19 @@ export default class Task {
   }
 
   buildInfo(fileName: string): BuildInfo {
-    const buildInfoDir = this._dirAt(this.dir(), 'build-info');
+    const buildInfoDir = this._dirAt(this.dir(), this.getBuildDir());
     const artifactFile = this._fileAt(buildInfoDir, `${extname(fileName) ? fileName : `${fileName}.json`}`);
     return JSON.parse(fs.readFileSync(artifactFile).toString());
   }
 
   buildInfos(): Array<BuildInfo> {
-    const buildInfoDir = this._dirAt(this.dir(), 'build-info');
+    const buildInfoDir = this._dirAt(this.dir(), this.getBuildDir());
     return fs.readdirSync(buildInfoDir).map((fileName) => this.buildInfo(fileName));
   }
 
   artifact(contractName: string, fileName?: string): Artifact {
-    const buildInfoDir = this._dirAt(this.dir(), 'build-info');
+    const buildInfoDir = this._dirAt(this.dir(), this.getBuildDir());
+
     const builds: {
       [sourceName: string]: { [contractName: string]: CompilerOutputContract };
     } = this._existsFile(path.join(buildInfoDir, `${fileName || contractName}.json`))
@@ -247,8 +248,18 @@ export default class Task {
       Object.keys(builds[sourceName]).find((key) => key === contractName)
     );
 
-    if (!sourceName) throw Error(`Could not find artifact for ${contractName}`);
+    if (!sourceName) {
+      throw Error(`Could not find artifact for ${contractName}`);
+    }
+
     return getArtifactFromContractOutput(sourceName, contractName, builds[sourceName][contractName]);
+  }
+
+  getBuildDir() {
+    const buildDir =
+      this._network === 'zkSyncTestnet' || this._network === 'zkSync' ? 'build-info-zksync' : 'build-info';
+
+    return buildDir;
   }
 
   actionId(contractName: string, signature: string): string {
@@ -300,7 +311,7 @@ export default class Task {
     }
   }
 
-  private _checkManuallySavedArtifacts(output: Output) {
+  protected _checkManuallySavedArtifacts(output: Output) {
     for (const name of Object.keys(output)) {
       const expectedAddress = this.output()[name];
       const actualAddress = output[name];
@@ -314,7 +325,7 @@ export default class Task {
     }
   }
 
-  private _save(output: Output) {
+  protected _save(output: Output) {
     const taskOutputDir = this._dirAt(this.dir(), 'output', false);
     if (!fs.existsSync(taskOutputDir)) fs.mkdirSync(taskOutputDir);
 
@@ -326,7 +337,7 @@ export default class Task {
     this._write(taskOutputFile, finalOutput);
   }
 
-  private _parseRawInput(rawInput: RawInputKeyValue): Input {
+  protected _parseRawInput(rawInput: RawInputKeyValue): Input {
     return Object.keys(rawInput).reduce((input: Input, key: Network | string) => {
       const item = rawInput[key];
 
@@ -351,7 +362,7 @@ export default class Task {
     }, {});
   }
 
-  private _parseRawOutput(rawOutput: RawOutput): Output {
+  protected _parseRawOutput(rawOutput: RawOutput): Output {
     return Object.keys(rawOutput).reduce((output: Output, key: string) => {
       const value = rawOutput[key];
       output[key] = typeof value === 'string' ? value : value.address;
@@ -359,41 +370,41 @@ export default class Task {
     }, {});
   }
 
-  private _read(path: string): Output {
+  protected _read(path: string): Output {
     return fs.existsSync(path) ? JSON.parse(fs.readFileSync(path).toString()) : {};
   }
 
-  private _write(path: string, output: Output): void {
+  protected _write(path: string, output: Output): void {
     const finalOutputJSON = JSON.stringify(output, null, 2);
     fs.writeFileSync(path, finalOutputJSON);
   }
 
-  private _fileAt(base: string, name: string, ensure = true): string {
+  protected _fileAt(base: string, name: string, ensure = true): string {
     const filePath = path.join(base, name);
     if (ensure && !this._existsFile(filePath)) throw Error(`Could not find a file at ${filePath}`);
     return filePath;
   }
 
-  private _dirAt(base: string, name: string, ensure = true): string {
+  protected _dirAt(base: string, name: string, ensure = true): string {
     const dirPath = path.join(base, name);
     if (ensure && !this._existsDir(dirPath)) throw Error(`Could not find a directory at ${dirPath}`);
     return dirPath;
   }
 
-  private _existsFile(filePath: string): boolean {
+  protected _existsFile(filePath: string): boolean {
     return fs.existsSync(filePath) && fs.statSync(filePath).isFile();
   }
 
-  private _existsDir(dirPath: string): boolean {
+  protected _existsDir(dirPath: string): boolean {
     return fs.existsSync(dirPath) && fs.statSync(dirPath).isDirectory();
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private _isTask(object: any): boolean {
+  protected _isTask(object: any): boolean {
     return object.constructor.name == 'Task';
   }
 
-  private _findTaskId(idAlias: string): string {
+  protected _findTaskId(idAlias: string): string {
     const matches = Task.getAllTaskIds().filter((taskDirName) => taskDirName.includes(idAlias));
 
     if (matches.length == 1) {

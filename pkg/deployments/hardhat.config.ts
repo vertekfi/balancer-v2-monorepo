@@ -1,10 +1,9 @@
 import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-waffle';
-import 'hardhat-local-networks-config-plugin';
+import * as networkConfig from 'hardhat-local-networks-config-plugin';
 import 'hardhat-ignore-warnings';
 
 import '@balancer-labs/v2-common/setupTests';
-
 import { task } from 'hardhat/config';
 import { TASK_TEST } from 'hardhat/builtin-tasks/task-names';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
@@ -21,6 +20,7 @@ import logger, { Logger } from './src/logger';
 import { checkActionIds, checkActionIdUniqueness, saveActionIds } from './src/actionId';
 import { saveContractDeploymentAddresses } from './src/network';
 import { name } from './package.json';
+import { zkSyncTask } from './src/zkSyncTask';
 
 const defaultVerboseLogging = true;
 
@@ -38,6 +38,29 @@ task('deploy', 'Run deployment task')
       const apiKey = args.key ?? (hre.config.networks[hre.network.name] as any).verificationAPIKey;
       const verifier = apiKey ? new Verifier(hre.network, apiKey) : undefined;
       await new Task(args.id, TaskMode.LIVE, hre.network.name, verifier).run(args);
+    }
+  );
+
+task('deploy:zkSync', 'Run zkSync deployment task')
+  .addParam('id', 'Deployment task ID')
+  .addFlag('force', 'Ignore previous deployments')
+  .addOptionalParam('key', 'Etherscan API key to verify contracts')
+  .setAction(
+    async (args: { id: string; force?: boolean; key?: string; verbose?: boolean }, hre: HardhatRuntimeEnvironment) => {
+      Logger.setDefaults(false, args.verbose || defaultVerboseLogging);
+
+      logger.info(`Task:deploy`);
+
+      if (hre.network.name !== 'zkSyncTestnet' && hre.network.name !== 'zkSync') {
+        throw new Error('Network is not zkSyncTestnet or zkSync');
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const apiKey = args.key ?? (hre.config.networks[hre.network.name] as any).verificationAPIKey;
+      const verifier = apiKey ? new Verifier(hre.network, apiKey) : undefined;
+      const task = new zkSyncTask(args.id, TaskMode.LIVE, hre.network.name, verifier);
+      task.setHRE(hre);
+      await task.run(args);
     }
   );
 
@@ -247,4 +270,21 @@ export default {
     sources: './tasks',
   },
   warnings: hardhatBaseConfig.warnings,
+  networks: {
+    hardhat: {
+      zksync: true,
+    },
+    zkSyncTestnet: {
+      // url: 'https://testnet.era.zksync.dev', // The testnet RPC URL of zkSync Era network.
+      // ethNetwork: 'goerli', // The identifier of the network (e.g. `mainnet` or `goerli`)
+      url: 'http://localhost:3050',
+      ethNetwork: 'http://localhost:8545',
+      zksync: true, // Set to true to target zkSync Era.
+    },
+    zkSync: {
+      url: 'https://mainnet.era.zksync.io', // The testnet RPC URL of zkSync Era network.
+      ethNetwork: 'mainnet', // The identifier of the network (e.g. `mainnet` or `goerli`)
+      zksync: true, // Set to true to target zkSync Era.
+    },
+  },
 };

@@ -12,7 +12,7 @@ import Task from './task';
  * @param contract - Name of the contract to match. Filename shall be used if undefined.
  */
 export function extractArtifact(task: Task, file?: string, contract?: string): void {
-  const buildInfoDirectory = path.resolve(task.dir(), 'build-info');
+  const buildInfoDirectory = path.resolve(task.dir(), task.getBuildDir());
   if (existsSync(buildInfoDirectory) && statSync(buildInfoDirectory).isDirectory()) {
     if (file) {
       _extractArtifact(task, file, contract);
@@ -37,7 +37,7 @@ function _extractArtifact(task: Task, file: string, contract?: string) {
  * @param task - The task for which to check artifact integrity.
  */
 export function checkArtifact(task: Task): void {
-  const buildInfoDirectory = path.resolve(task.dir(), 'build-info');
+  const buildInfoDirectory = path.resolve(task.dir(), task.getBuildDir());
   if (existsSync(buildInfoDirectory) && statSync(buildInfoDirectory).isDirectory()) {
     for (const buildInfoFileName of readdirSync(buildInfoDirectory)) {
       const fileName = path.parse(buildInfoFileName).name;

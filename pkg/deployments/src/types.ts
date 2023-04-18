@@ -6,7 +6,17 @@ export { Artifact, Libraries } from 'hardhat/types';
 import Task from './task';
 import { Libraries } from '@nomiclabs/hardhat-ethers/types';
 
-export const NETWORKS = ['goerli', 'mainnet', 'polygon', 'arbitrum', 'optimism', 'gnosis', 'bsc'];
+export const NETWORKS = [
+  'goerli',
+  'mainnet',
+  'polygon',
+  'arbitrum',
+  'optimism',
+  'gnosis',
+  'bsc',
+  'zkSyncTestnet',
+  'zkSync',
+];
 
 export type Network = typeof NETWORKS[number];
 

@@ -1,24 +1,88 @@
+import { Wallet } from 'zksync-web3';
+import { Deployer } from '@matterlabs/hardhat-zksync-deploy';
 import { Contract } from 'ethers';
 import { Libraries, Network, Param } from './types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import Task, { TaskMode } from './task';
 import Verifier from './verifier';
+import logger from './logger';
+import { saveContractDeploymentTransactionHash } from './network';
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { config } from 'dotenv';
+import { join } from 'path';
+
+config({ path: join(process.cwd(), '.env') });
 
 export class zkSyncTask extends Task {
+  hre: HardhatRuntimeEnvironment | undefined;
+
   constructor(idAlias: string, mode: TaskMode, network?: Network, verifier?: Verifier) {
     if (network !== 'zkSync' && network !== 'zkSyncTestnet') {
-      throw new Error('zkSyncTask: Network must be zkSync or xkSyncTestnet');
+      throw new Error('zkSyncTask: Network must be zkSync or zkSyncTestnet');
     }
 
-    super(idAlias, mode, mode === TaskMode.LIVE ? 'zkSync' : 'zkSyncTestnet', verifier);
+    super(idAlias, mode, network, verifier);
   }
 
-  async run() {
-    //
+  setHRE(hre: HardhatRuntimeEnvironment) {
+    this.hre = hre;
   }
 
-  async deploy(name: string, args: Array<Param>, from?: SignerWithAddress, force?: boolean, libs?: Libraries) {
-    return new Contract('', []);
+  async deploy(
+    name: string,
+    args: Array<Param> = [],
+    from?: SignerWithAddress,
+    force?: boolean,
+    libs?: Libraries
+  ): Promise<Contract> {
+    if (!this.hre) {
+      throw Error(`HardhatRuntimeEnvironment not set. setHRE()`);
+    }
+
+    // if (name.split('/').length < 2) {
+    //   throw Error(`zkSyncTask: deploy needs contract file path`);
+    // }
+
+    if (this.mode == TaskMode.CHECK) {
+      return await this.check(name, args, libs);
+    }
+
+    if (this.mode !== TaskMode.LIVE && this.mode !== TaskMode.TEST) {
+      throw Error(`Cannot deploy in tasks of mode ${TaskMode[this.mode]}`);
+    }
+
+    let instance: Contract;
+    const output = this.output({ ensure: false });
+
+    if ((force || !output[name]) && this.hre) {
+      console.log(process.env.DEV_KEY);
+      const wallet = new Wallet(process.env.DEV_KEY || '');
+
+      // Create deployer object and load the artifact of the contract we want to deploy.
+      const deployer = new Deployer(this.hre, wallet);
+
+      // const artifact = await deployer.loadArtifact(name);
+      // this.artifact() will get the correct file
+      const artifact = this.artifact(name) as any; // ZkSyncArtifact
+
+      instance = await deployer.deploy(artifact, args); //   { libraries: libs }
+      this.save({ [name]: instance });
+
+      const contractAddress = instance.address;
+      logger.success(
+        `zkSyncTask: ${artifact.contractName} was deployed to ${contractAddress}. Network: ${this._network}`
+      );
+
+      if (this.mode === TaskMode.LIVE) {
+        console.log(`zkSyncTask: "${instance.address}" - txHash: "${instance.deployTransaction.hash}"`);
+        saveContractDeploymentTransactionHash(instance.address, instance.deployTransaction.hash, this.network);
+      }
+    } else {
+      logger.info(`${name} already deployed at ${output[name]}`);
+      instance = await this.instanceAt(name, output[name]);
+    }
+
+    return instance;
   }
 
   async deployAndVerify(name: string, args: Array<Param>, from?: SignerWithAddress, force?: boolean, libs?: Libraries) {
