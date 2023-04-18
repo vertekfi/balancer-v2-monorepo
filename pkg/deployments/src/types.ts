@@ -4,6 +4,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-wit
 export { Artifact, Libraries } from 'hardhat/types';
 
 import Task from './task';
+import { Libraries } from '@nomiclabs/hardhat-ethers/types';
 
 export const NETWORKS = ['goerli', 'mainnet', 'polygon', 'arbitrum', 'optimism', 'gnosis', 'bsc'];
 
@@ -40,3 +41,25 @@ export type Output = {
 export type RawOutput = {
   [key: string]: string | Contract;
 };
+
+export interface ITask {
+  run: () => Promise<void>;
+
+  deploy: (
+    name: string,
+    args: Array<Param>,
+    from?: SignerWithAddress,
+    force?: boolean,
+    libs?: Libraries
+  ) => Promise<any>;
+
+  deployAndVerify: (
+    name: string,
+    args: Array<Param>,
+    from?: SignerWithAddress,
+    force?: boolean,
+    libs?: Libraries
+  ) => Promise<Contract>;
+
+  verify: (name: string, address: string, constructorArguments: string | unknown[], libs?: Libraries) => Promise<void>;
+}

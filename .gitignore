@@ -18,6 +18,9 @@ node_modules/
 artifacts/
 cache/
 
+artifacts-zk/
+cache-zk/
+
 # Build artifacts
 dist/
 pkg/balancer-js/src/typechain/*
