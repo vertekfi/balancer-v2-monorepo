@@ -13,6 +13,9 @@ export default {
     WETH: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
   },
   zkSyncTestnet: {
-    WETH: '',
+    WETH: '0xf60d3e918b22fDf8AEf163b5423D3f2fAeDe58A6',
+  },
+  zkSyncLocal: {
+    WETH: '0xf60d3e918b22fDf8AEf163b5423D3f2fAeDe58A6',
   },
 };

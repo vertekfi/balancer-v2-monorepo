@@ -49,11 +49,11 @@ task('deploy:zkSync', 'Run zkSync deployment task')
     async (args: { id: string; force?: boolean; key?: string; verbose?: boolean }, hre: HardhatRuntimeEnvironment) => {
       Logger.setDefaults(false, args.verbose || defaultVerboseLogging);
 
-      logger.info(`Task:deploy`);
+      logger.info(`Task:deploy:zkSync`);
 
-      if (hre.network.name !== 'zkSyncTestnet' && hre.network.name !== 'zkSync') {
-        throw new Error('Network is not zkSyncTestnet or zkSync');
-      }
+      // if (hre.network.name !== 'zkSyncTestnet' && hre.network.name !== 'zkSync' && hre.network.name !== 'zkSyncLocal') {
+      //   throw new Error('Network is not zkSyncTestnet or zkSync');
+      // }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const apiKey = args.key ?? (hre.config.networks[hre.network.name] as any).verificationAPIKey;
@@ -274,12 +274,16 @@ export default {
     hardhat: {
       zksync: true,
     },
-    zkSyncTestnet: {
-      // url: 'https://testnet.era.zksync.dev', // The testnet RPC URL of zkSync Era network.
-      // ethNetwork: 'goerli', // The identifier of the network (e.g. `mainnet` or `goerli`)
+    zkSyncLocal: {
       url: 'http://localhost:3050',
       ethNetwork: 'http://localhost:8545',
       zksync: true, // Set to true to target zkSync Era.
+    },
+    zkSyncTestnet: {
+      zksync: true,
+      ethNetwork: 'goerli',
+      url: 'https://zksync2-testnet.zksync.dev',
+      verifyURL: 'https://zksync2-testnet-explorer.zksync.dev/contract_verification',
     },
     zkSync: {
       url: 'https://mainnet.era.zksync.io', // The testnet RPC URL of zkSync Era network.

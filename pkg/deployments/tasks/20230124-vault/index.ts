@@ -14,7 +14,14 @@ export default async (task: Task, { force, from }: TaskRunOptions = {}): Promise
   //   input.bufferPeriodDuration,
   // ]);
 
-  // // The vault automatically also deploys the protocol fees collector: we must verify it
+  // const vault = await task.deploy('Vault', [
+  //   basicAuthorizer.address,
+  //   input.WETH,
+  //   input.pauseWindowDuration,
+  //   input.bufferPeriodDuration,
+  // ]);
+
+  // The vault automatically also deploys the protocol fees collector: we must verify it
   // const feeCollectorAddress = await vault.getProtocolFeesCollector();
   // await task.save({ ProtocolFeesCollector: feeCollectorAddress });
 };

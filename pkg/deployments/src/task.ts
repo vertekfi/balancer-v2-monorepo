@@ -257,7 +257,9 @@ export default class Task {
 
   getBuildDir() {
     const buildDir =
-      this._network === 'zkSyncTestnet' || this._network === 'zkSync' ? 'build-info-zksync' : 'build-info';
+      this._network === 'zkSyncTestnet' || this._network === 'zkSync' || this._network === 'zkSyncLocal'
+        ? 'build-info-zksync'
+        : 'build-info';
 
     return buildDir;
   }

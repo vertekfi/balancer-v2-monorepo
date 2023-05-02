@@ -5,6 +5,7 @@ export { Artifact, Libraries } from 'hardhat/types';
 
 import Task from './task';
 import { Libraries } from '@nomiclabs/hardhat-ethers/types';
+import { Artifact } from 'hardhat/types';
 
 export const NETWORKS = [
   'goerli',
@@ -16,6 +17,7 @@ export const NETWORKS = [
   'bsc',
   'zkSyncTestnet',
   'zkSync',
+  'zkSyncLocal',
 ];
 
 export type Network = typeof NETWORKS[number];
@@ -51,3 +53,11 @@ export type Output = {
 export type RawOutput = {
   [key: string]: string | Contract;
 };
+
+export interface FactoryDeps {
+  [contractHash: string]: string;
+}
+
+export interface ZkSyncArtifact extends Artifact {
+  factoryDeps: FactoryDeps;
+}

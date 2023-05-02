@@ -17,8 +17,19 @@ export default {
     compilers: hardhatBaseConfig.compilers,
     overrides: { ...hardhatBaseConfig.overrides(name) },
   },
+  vyper: {
+    compilers: [{ version: '0.3.1' }, { version: '0.3.3' }],
+  },
   paths: {
     sources: './tasks',
   },
-  warnings: hardhatBaseConfig.warnings,
+  //  warnings: hardhatBaseConfig.warnings,
+  networks: {
+    zkTestnet: {
+      zksync: true,
+      ethNetwork: 'goerli',
+      url: 'https://zksync2-testnet.zksync.dev',
+      verifyURL: 'https://zksync2-testnet-explorer.zksync.dev/contract_verification',
+    },
+  },
 };
