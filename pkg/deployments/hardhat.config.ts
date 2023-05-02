@@ -41,7 +41,7 @@ task('deploy', 'Run deployment task')
     }
   );
 
-task('deploy:zkSync', 'Run zkSync deployment task')
+task('deploy:zksync', 'Run zkSync deployment task')
   .addParam('id', 'Deployment task ID')
   .addFlag('force', 'Ignore previous deployments')
   .addOptionalParam('key', 'Etherscan API key to verify contracts')
@@ -276,8 +276,9 @@ export default {
     },
     zkSyncLocal: {
       url: 'http://localhost:3050',
-      ethNetwork: 'http://localhost:8545',
-      zksync: true, // Set to true to target zkSync Era.
+      ethNetwork: 'mainnet',
+      zksync: true,
+      accounts: ['7726827caac94a7f9e1b160f7ea819f172f7b6f9d2a97f992c38edeab82d4110'], // Global test account provided by zksync team
     },
     zkSyncTestnet: {
       zksync: true,

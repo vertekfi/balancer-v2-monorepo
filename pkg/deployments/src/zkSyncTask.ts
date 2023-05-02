@@ -43,8 +43,6 @@ export class zkSyncTask extends Task {
     //   throw Error(`zkSyncTask: deploy needs contract file path`);
     // }
 
-    console.log(name);
-
     if (this.mode == TaskMode.CHECK) {
       return await this.check(name, args, libs);
     }

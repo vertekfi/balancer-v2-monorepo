@@ -19,7 +19,7 @@ export async function deployZk(
   const hre: HardhatRuntimeEnvironment = await import('hardhat');
   const { config } = hre;
   const zkProvider = new zk.Provider((hre.network.config as HttpNetworkConfig).url);
-  const accounts = config.networks.zkTestnet.accounts as HardhatNetworkAccountConfig[];
+  const accounts = config.networks.zkSyncLocal.accounts as HardhatNetworkAccountConfig[];
   const zkSigner = new zk.Wallet(accounts[0] as unknown as utils.BytesLike, zkProvider);
 
   const factory = new zk.ContractFactory(
