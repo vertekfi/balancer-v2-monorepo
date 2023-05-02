@@ -67,6 +67,7 @@ export default {
       url: 'http://localhost:3050',
       ethNetwork: 'http://localhost:8545',
       zksync: true,
+      accounts: [''],
     },
   },
 };
