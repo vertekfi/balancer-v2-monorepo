@@ -1,7 +1,6 @@
 import Task from '../../src/task';
 import { TaskRunOptions } from '../../src/types';
 
-import VaultDeployer from '@balancer-labs/v2-helpers/src/models/vault/VaultDeployer';
 import { getSigner } from '../../src/signers';
 import { AuthorizersInput } from './input';
 

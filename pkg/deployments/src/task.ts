@@ -260,6 +260,7 @@ export default class Task {
     }
 
     if (this.network.includes('zk')) {
+      console.log('ZK TIINNGGSSS');
       return getZkArtifactFromContractOutput(sourceName, contractName, builds[sourceName][contractName]);
     } else {
       return getArtifactFromContractOutput(sourceName, contractName, builds[sourceName][contractName]);
@@ -291,8 +292,9 @@ export default class Task {
   }
 
   getBuildDir() {
-    const isZk = this._network?.indexOf('zk');
-    return isZk && isZk > 0 ? 'build-info/zk' : 'build-info';
+    const buildDir = this._network ? 'build-info-zksync' : 'build-info';
+
+    return buildDir;
   }
 
   actionId(contractName: string, signature: string): string {

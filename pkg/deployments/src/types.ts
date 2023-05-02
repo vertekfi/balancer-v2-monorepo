@@ -4,7 +4,6 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-wit
 export { Artifact, Libraries } from 'hardhat/types';
 
 import Task from './task';
-import { Libraries } from '@nomiclabs/hardhat-ethers/types';
 import { Artifact } from 'hardhat/types';
 
 export const NETWORKS = [
