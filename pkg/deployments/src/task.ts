@@ -260,7 +260,6 @@ export default class Task {
     }
 
     if (this.network.includes('zk')) {
-      console.log('ZK TIINNGGSSS');
       return getZkArtifactFromContractOutput(sourceName, contractName, builds[sourceName][contractName]);
     } else {
       return getArtifactFromContractOutput(sourceName, contractName, builds[sourceName][contractName]);

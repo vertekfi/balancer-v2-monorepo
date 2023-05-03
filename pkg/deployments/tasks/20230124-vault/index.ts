@@ -5,23 +5,21 @@ import { RawVaultDeployment } from '@balancer-labs/v2-helpers/src/models/vault/t
 export default async (task: Task, { force, from }: TaskRunOptions = {}): Promise<void> => {
   let input = task.input() as RawVaultDeployment;
 
-  const basicAuthorizer = await task.deploy('MockBasicAuthorizer');
-
   // const vault = await task.deployAndVerify('Vault', [
-  //   basicAuthorizer.address,
+  //   '0x111C3E89Ce80e62EE88318C2804920D4c96f92bb',
   //   input.WETH,
   //   input.pauseWindowDuration,
   //   input.bufferPeriodDuration,
   // ]);
 
-  // const vault = await task.deploy('Vault', [
-  //   basicAuthorizer.address,
-  //   input.WETH,
-  //   input.pauseWindowDuration,
-  //   input.bufferPeriodDuration,
-  // ]);
+  const vault = await task.deploy('Vault', [
+    '0x111C3E89Ce80e62EE88318C2804920D4c96f92bb',
+    input.WETH,
+    input.pauseWindowDuration,
+    input.bufferPeriodDuration,
+  ]);
 
   // The vault automatically also deploys the protocol fees collector: we must verify it
-  // const feeCollectorAddress = await vault.getProtocolFeesCollector();
-  // await task.save({ ProtocolFeesCollector: feeCollectorAddress });
+  const feeCollectorAddress = await vault.getProtocolFeesCollector();
+  await task.save({ ProtocolFeesCollector: feeCollectorAddress });
 };
