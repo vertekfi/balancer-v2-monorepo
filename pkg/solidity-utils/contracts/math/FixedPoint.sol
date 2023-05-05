@@ -66,9 +66,12 @@ library FixedPoint {
         //
         // Equivalent to:
         // result = product == 0 ? 0 : ((product - 1) / FixedPoint.ONE) + 1;
-        assembly {
-            result := mul(iszero(iszero(product)), add(div(sub(product, 1), ONE), 1))
-        }
+
+        result = product == 0 ? 0 : ((product - 1) / ONE) + 1;
+
+        // assembly {
+        //     result := mul(iszero(iszero(product)), add(div(sub(product, 1), ONE), 1))
+        // }
     }
 
     function divDown(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -94,9 +97,12 @@ library FixedPoint {
         //
         // Equivalent to:
         // result = a == 0 ? 0 : (a * FixedPoint.ONE - 1) / b + 1;
-        assembly {
-            result := mul(iszero(iszero(aInflated)), add(div(sub(aInflated, 1), b), 1))
-        }
+
+        result = a == 0 ? 0 : (a * ONE - 1) / b + 1;
+
+        // assembly {
+        //     result := mul(iszero(iszero(aInflated)), add(div(sub(aInflated, 1), b), 1))
+        // }
     }
 
     /**
@@ -156,8 +162,11 @@ library FixedPoint {
     function complement(uint256 x) internal pure returns (uint256 result) {
         // Equivalent to:
         // result = (x < ONE) ? (ONE - x) : 0;
-        assembly {
-            result := mul(lt(x, ONE), sub(ONE, x))
-        }
+
+        result = (x < ONE) ? (ONE - x) : 0;
+
+        // assembly {
+        //     result := mul(lt(x, ONE), sub(ONE, x))
+        // }
     }
 }
