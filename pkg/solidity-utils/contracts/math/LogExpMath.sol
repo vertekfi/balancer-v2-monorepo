@@ -150,9 +150,14 @@ library LogExpMath {
             // We only handle positive exponents: e^(-x) is computed as 1 / e^x. We can safely make x positive since it
             // fits in the signed 256 bit range (as it is larger than MIN_NATURAL_EXPONENT).
             // Fixed point division requires multiplying by ONE_18.
-            return ((ONE_18 * ONE_18) / exp(-x));
+            return ((ONE_18 * ONE_18) / _expWork(-x));
         }
 
+        return _expWork(x);
+    }
+
+    /// @dev Modified from original to remove recursive call in exp() due to zkSync compiler issues
+    function _expWork(int256 x) private pure returns (int256) {
         // First, we use the fact that e^(x+y) = e^x * e^y to decompose x into a sum of powers of two, which we call x_n,
         // where x_n == 2^(7 - n), and e^x_n = a_n has been precomputed. We choose the first x_n, x0, to equal 2^7
         // because all larger powers are larger than MAX_NATURAL_EXPONENT, and therefore not present in the
@@ -328,9 +333,14 @@ library LogExpMath {
             // Since ln(a^k) = k * ln(a), we can compute ln(a) as ln(a) = ln((1/a)^(-1)) = - ln((1/a)). If a is less
             // than one, 1/a will be greater than one, and this if statement will not be entered in the recursive call.
             // Fixed point division requires multiplying by ONE_18.
-            return (-_ln((ONE_18 * ONE_18) / a));
+            return (-_lnWork((ONE_18 * ONE_18) / a));
         }
 
+        return _lnWork(a);
+    }
+
+    /// @dev Modified from original to remove recursive call in exp() due to zkSync compiler issues
+    function _lnWork(int256 a) private pure returns (int256) {
         // First, we use the fact that ln^(a * b) = ln(a) + ln(b) to decompose ln(a) into a sum of powers of two, which
         // we call x_n, where x_n == 2^(7 - n), which are the natural logarithm of precomputed quantities a_n (that is,
         // ln(a_n) = x_n). We choose the first x_n, x0, to equal 2^7 because the exponential of all larger powers cannot
