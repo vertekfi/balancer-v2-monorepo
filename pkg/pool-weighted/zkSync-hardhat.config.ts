@@ -6,7 +6,7 @@ import '@matterlabs/hardhat-zksync-solc';
 // import { name } from '../../package.json';
 
 export const zksolc = {
-  version: '1.3.8',
+  version: '1.3.10',
   compilerSource: 'binary',
   settings: {},
 };
@@ -38,7 +38,7 @@ export default {
       runs: 9999,
     },
   },
-  defaultNetwork: 'zkSyncTestnet',
+  defaultNetwork: 'zkSyncLocal',
   zksolc,
   networks: {
     ...zkSyncNetworks,
