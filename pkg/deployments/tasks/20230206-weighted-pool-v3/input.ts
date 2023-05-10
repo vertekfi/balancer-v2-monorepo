@@ -27,6 +27,10 @@ export default {
     WETH: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
     BAL: '0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8', // USDC for test pool (Our token version isn't on arb yet)
   },
+  arbitrumTestServer: {
+    WETH: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
+    BAL: '0x0c0B0FeF3f8E19F0d23Bc68941F429E849d4430b', // ARTK
+  },
   FactoryVersion: JSON.stringify({ name: 'WeightedPoolFactory', ...BaseVersion }),
   PoolVersion: JSON.stringify({ name: 'WeightedPool', ...BaseVersion }),
 };

@@ -1,0 +1,6 @@
+{
+  "AuthorizerAdaptor": "0xe21B57Ca0BF40D3df5D45130b1f7AEc452BCF0c1",
+  "AuthorizerAdaptorEntrypoint": "0x2bB9e0815188b8fC7D456dBDFf4575D910d653c8",
+  "TimelockAuthorizer": "0x88156b203f4a7Af94093BbA6ae3a12B3c8E9301e",
+  "TimelockExecutor": "0xE0f209070671aD19B8547C7Bf63446d2a17df250"
+}
