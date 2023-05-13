@@ -1,3 +1,4 @@
+import { DAY } from '@balancer-labs/v2-helpers/src/time';
 import Task, { TaskMode } from '../../src/task';
 
 export type ComposableStablePoolDeployment = {
@@ -7,6 +8,8 @@ export type ComposableStablePoolDeployment = {
   PoolVersion: string;
   WETH: string;
   BAL: string;
+  initialPauseWindowDuration: number;
+  bufferPeriodDuration: number;
 };
 
 // const Vault = new Task('20230124-vault', TaskMode.READ_ONLY);
@@ -14,7 +17,7 @@ export type ComposableStablePoolDeployment = {
 // const WETH = new Task('00000000-tokens', TaskMode.READ_ONLY);
 // const BAL = new Task('00000000-tokens', TaskMode.READ_ONLY);
 
-const BaseVersion = { version: 3, deployment: '20230206-composable-stable-pool-v3' };
+const BaseVersion = { version: 3, deployment: '20230218-composable-stable-pool-v3' };
 
 export default {
   bsc: {
@@ -25,10 +28,12 @@ export default {
   },
   arbitrum: {
     WETH: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
-    BAL: '',
+    BAL: '0x412A1ab6A00B50A7ad2306C994ae609Bd823ad87',
     Vault: '0xe4E96Cf369D4d604Bedc4d7962F94D53E4B5e3C6',
     ProtocolFeePercentagesProvider: '0x2FB0822b926e823735A9bEF51d9cEa9c2F1bb523',
   },
   FactoryVersion: JSON.stringify({ name: 'ComposableStablePoolFactory', ...BaseVersion }),
   PoolVersion: JSON.stringify({ name: 'ComposableStablePool', ...BaseVersion }),
+  initialPauseWindowDuration: DAY * 270, // using new max values
+  bufferPeriodDuration: DAY * 90,
 };

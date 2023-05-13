@@ -33,7 +33,6 @@ import "@balancer-labs/v2-pool-utils/contracts/rates/PriceRateCache.sol";
 import "./ComposableStablePoolStorage.sol";
 import "./ComposableStablePoolRates.sol";
 import "./ComposableStablePoolStorage.sol";
-import "./ComposableStablePoolRates.sol";
 import "./ComposableStablePoolProtocolFees.sol";
 import "./StablePoolAmplification.sol";
 import "./StableMath.sol";
