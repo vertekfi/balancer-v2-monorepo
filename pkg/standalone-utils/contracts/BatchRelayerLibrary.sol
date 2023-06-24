@@ -19,14 +19,12 @@ import "./relayer/BaseRelayerLibrary.sol";
 
 import "./relayer/AaveWrapping.sol";
 import "./relayer/ERC4626Wrapping.sol";
-import "./relayer/GaugeActions.sol";
 import "./relayer/LidoWrapping.sol";
 import "./relayer/UnbuttonWrapping.sol";
 import "./relayer/ReaperWrapping.sol";
 import "./relayer/VaultActions.sol";
 import "./relayer/VaultPermit.sol";
-
-import "./relayer/BNBxWrapping.sol";
+import "./relayer/NFTPoolZapIn.sol";
 
 /**
  * @title Batch Relayer Library
@@ -37,20 +35,14 @@ contract BatchRelayerLibrary is
     AaveWrapping,
     BaseRelayerLibrary,
     ERC4626Wrapping,
-    GaugeActions,
     LidoWrapping,
     UnbuttonWrapping,
     ReaperWrapping,
     VaultActions,
     VaultPermit,
-    BNBxWrapping
+    NFTPoolZapIn
 {
-    constructor(
-        IVault vault,
-        IERC20 wstETH,
-        IBalancerMinter minter,
-        IERC20 wBNBx
-    ) BaseRelayerLibrary(vault) LidoWrapping(wstETH) GaugeActions(minter) BNBxWrapping(wBNBx) {
+    constructor(IVault vault, IERC20 wstETH) BaseRelayerLibrary(vault) LidoWrapping(wstETH) NFTPoolZapIn(vault) {
         // solhint-disable-previous-line no-empty-blocks
     }
 }
